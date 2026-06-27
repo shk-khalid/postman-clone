@@ -1,10 +1,31 @@
 import React from "react"
-import { Settings, Moon, Sun, Monitor, HelpCircle, HardDrive } from "lucide-react"
+import { Settings, Moon, Sun, Monitor, HardDrive } from "lucide-react"
+import { useSettingsStore } from "@/store/settingsStore"
 import { useWorkspaceStore } from "@/store/workspaceStore"
+import { useToastStore } from "@/store/toastStore"
 import { cn } from "@/lib/utils"
 
 export const SettingsFeature: React.FC = () => {
-  const { theme, setTheme } = useWorkspaceStore()
+  const { theme, fontSize, wordWrap, updateSettings } = useSettingsStore()
+  const { setTheme } = useWorkspaceStore()
+  const { showToast } = useToastStore()
+
+  const handleThemeChange = (newTheme: "dark" | "light" | "system") => {
+    updateSettings({ theme: newTheme })
+    setTheme(newTheme)
+    showToast(`Theme updated to ${newTheme}`, "success")
+  }
+
+  const handleFontChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const size = parseInt(e.target.value, 10)
+    updateSettings({ fontSize: size })
+  }
+
+  const handleWordWrapChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const wrap = e.target.checked ? "on" : "off"
+    updateSettings({ wordWrap: wrap })
+    showToast(`Editor word wrap set to ${wrap}`, "info")
+  }
 
   const themeOptions = [
     { value: "dark", label: "Dark", icon: Moon },
@@ -31,7 +52,7 @@ export const SettingsFeature: React.FC = () => {
               return (
                 <button
                   key={opt.value}
-                  onClick={() => setTheme(opt.value)}
+                  onClick={() => handleThemeChange(opt.value)}
                   className={cn(
                     "flex flex-col items-center justify-center gap-1.5 p-2.5 rounded-lg border text-xs transition-all",
                     isSelected
@@ -54,15 +75,15 @@ export const SettingsFeature: React.FC = () => {
           <div className="space-y-1.5">
             <div className="flex items-center justify-between">
               <label className="text-[11px] text-muted-foreground">Editor Font Size</label>
-              <span className="text-[11px] font-mono bg-white/5 px-1.5 py-0.5 rounded text-foreground">13px</span>
+              <span className="text-[11px] font-mono bg-white/5 px-1.5 py-0.5 rounded text-foreground">{fontSize}px</span>
             </div>
             <input
               type="range"
-              min="10"
+              min="11"
               max="20"
-              defaultValue="13"
-              disabled
-              className="w-full h-1 bg-zinc-800 rounded-lg appearance-none cursor-not-allowed opacity-50"
+              value={fontSize}
+              onChange={handleFontChange}
+              className="w-full h-1 bg-zinc-800 rounded-lg appearance-none cursor-pointer accent-primary"
             />
           </div>
 
@@ -70,9 +91,9 @@ export const SettingsFeature: React.FC = () => {
             <span className="text-[11px] text-muted-foreground">Word Wrap</span>
             <input
               type="checkbox"
-              defaultChecked
-              disabled
-              className="rounded border-border/50 text-primary w-3.5 h-3.5 bg-zinc-900 opacity-50 cursor-not-allowed"
+              checked={wordWrap === "on"}
+              onChange={handleWordWrapChange}
+              className="rounded border-border/50 text-primary w-3.5 h-3.5 bg-zinc-900 cursor-pointer"
             />
           </div>
         </div>
@@ -90,16 +111,6 @@ export const SettingsFeature: React.FC = () => {
               className="w-full bg-zinc-900 border border-border/30 rounded-md px-2 py-1.5 text-xs text-muted-foreground/60 cursor-not-allowed opacity-50"
             />
           </div>
-
-          <div className="flex items-center justify-between">
-            <span className="text-[11px] text-muted-foreground">Follow Redirects</span>
-            <input
-              type="checkbox"
-              defaultChecked
-              disabled
-              className="rounded border-border/50 text-primary w-3.5 h-3.5 bg-zinc-900 opacity-50 cursor-not-allowed"
-            />
-          </div>
         </div>
 
         {/* Local Storage details */}
@@ -111,3 +122,4 @@ export const SettingsFeature: React.FC = () => {
     </div>
   )
 }
+export default SettingsFeature

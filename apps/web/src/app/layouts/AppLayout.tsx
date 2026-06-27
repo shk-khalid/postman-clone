@@ -1,7 +1,8 @@
-import React, { useEffect } from "react"
-import { Folder, Shield, History, Settings, Sparkles, LogOut, Moon, Sun, Monitor, Plus } from "lucide-react"
-import { useWorkspaceStore, SidebarFeature } from "@/store/workspaceStore"
+import React, { useEffect, useRef, useState } from "react"
+import { Folder, Shield, History, Settings, Sparkles, Plus, ChevronLeft, ChevronRight } from "lucide-react"
+import { useWorkspaceStore } from "@/store/workspaceStore"
 import { useTabStore } from "@/store/tabStore"
+import { useSettingsStore } from "@/store/settingsStore"
 import { CollectionsFeature } from "@/features/collections/CollectionsFeature"
 import { EnvironmentsFeature } from "@/features/environments/EnvironmentsFeature"
 import { HistoryFeature } from "@/features/history/HistoryFeature"
@@ -11,13 +12,25 @@ import { ResponseViewerFeature } from "@/features/response-viewer/ResponseViewer
 import { TabsBar } from "./TabsBar"
 import { SplitPane } from "@/components/ui/SplitPane"
 import { EmptyState } from "@/components/ui/EmptyState"
+import { ToastContainer } from "@/components/ui/ToastContainer"
 import { cn } from "@/lib/utils"
 
 export const AppLayout: React.FC = () => {
   const { activeFeature, setActiveFeature, environments, activeEnvironmentId, setActiveEnvironmentId, theme } = useWorkspaceStore()
   const { tabs, activeTabId, addTab } = useTabStore()
 
-  // Apply default theme class on initial mount
+  // Settings store parameters
+  const { sidebarWidth, sidebarCollapsed, updateSettings } = useSettingsStore()
+  const isResizingSidebar = useRef(false)
+
+  const menuItems = [
+    { id: "collections", label: "Collections", icon: Folder },
+    { id: "environments", label: "Environments", icon: Shield },
+    { id: "history", label: "History", icon: History },
+    { id: "settings", label: "Settings", icon: Settings },
+  ] as const
+
+  // Apply visual theme classes
   useEffect(() => {
     const root = window.document.documentElement
     root.classList.remove("light", "dark")
@@ -29,12 +42,40 @@ export const AppLayout: React.FC = () => {
     }
   }, [theme])
 
-  const menuItems = [
-    { id: "collections", label: "Collections", icon: Folder },
-    { id: "environments", label: "Environments", icon: Shield },
-    { id: "history", label: "History", icon: History },
-    { id: "settings", label: "Settings", icon: Settings },
-  ] as const
+  // Mouse resizing handles for sidebar panel
+  const handleSidebarMouseDown = (e: React.MouseEvent) => {
+    e.preventDefault()
+    isResizingSidebar.current = true
+    document.body.style.cursor = "col-resize"
+    document.body.style.userSelect = "none"
+  }
+
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!isResizingSidebar.current) return
+      // Calculate width from left of viewport minus logo/feature icon bar (56px)
+      const newWidth = e.clientX - 56
+      if (newWidth >= 200 && newWidth <= 450) {
+        updateSettings({ sidebarWidth: newWidth })
+      }
+    }
+
+    const handleMouseUp = () => {
+      if (isResizingSidebar.current) {
+        isResizingSidebar.current = false
+        document.body.style.cursor = ""
+        document.body.style.userSelect = ""
+      }
+    }
+
+    window.addEventListener("mousemove", handleMouseMove)
+    window.addEventListener("mouseup", handleMouseUp)
+
+    return () => {
+      window.removeEventListener("mousemove", handleMouseMove)
+      window.removeEventListener("mouseup", handleMouseUp)
+    }
+  }, [updateSettings])
 
   const renderSidebarContent = () => {
     switch (activeFeature) {
@@ -51,20 +92,21 @@ export const AppLayout: React.FC = () => {
     }
   }
 
-  // Find active env name
-  const currentEnv = environments.find((env) => env.id === activeEnvironmentId)
+  const toggleCollapse = () => {
+    updateSettings({ sidebarCollapsed: !sidebarCollapsed })
+  }
 
   return (
     <div className="flex h-screen w-screen bg-zinc-950 text-foreground overflow-hidden font-sans antialiased">
-      {/* Icon Sidebar */}
-      <div className="w-14 bg-zinc-950 border-r border-border/30 flex flex-col items-center py-4 justify-between shrink-0 select-none">
+      {/* 1. Feature Icon Switcher Sidebar */}
+      <div className="w-14 bg-zinc-950 border-r border-border/30 flex flex-col items-center py-4 justify-between shrink-0 select-none z-20">
         <div className="flex flex-col items-center gap-6 w-full">
           {/* Logo */}
           <div className="w-8 h-8 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center text-primary hover:scale-105 transition-transform">
             <Sparkles className="w-4 h-4 fill-primary/10" />
           </div>
 
-          {/* Navigation Items */}
+          {/* Navigation icons */}
           <nav className="flex flex-col gap-2.5 w-full px-2">
             {menuItems.map((item) => {
               const Icon = item.icon
@@ -73,18 +115,21 @@ export const AppLayout: React.FC = () => {
               return (
                 <button
                   key={item.id}
-                  onClick={() => setActiveFeature(item.id)}
+                  onClick={() => {
+                    setActiveFeature(item.id)
+                    if (sidebarCollapsed) {
+                      updateSettings({ sidebarCollapsed: false })
+                    }
+                  }}
                   className={cn(
-                    "relative flex items-center justify-center w-10 h-10 rounded-lg transition-all group",
-                    isActive
+                    "relative flex items-center justify-center w-10 h-10 rounded-lg transition-all group focus:outline-none focus:ring-1 focus:ring-primary/45",
+                    isActive && !sidebarCollapsed
                       ? "bg-primary text-primary-foreground font-semibold"
                       : "text-muted-foreground hover:bg-white/5 hover:text-foreground"
                   )}
                   title={item.label}
                 >
                   <Icon className="w-4 h-4" />
-                  
-                  {/* Tooltip */}
                   <span className="absolute left-14 scale-0 group-hover:scale-100 transition-all origin-left bg-zinc-900 border border-border/30 text-[10px] text-foreground font-semibold px-2 py-1 rounded shadow-lg pointer-events-none z-50 whitespace-nowrap">
                     {item.label}
                   </span>
@@ -94,16 +139,36 @@ export const AppLayout: React.FC = () => {
           </nav>
         </div>
 
-        {/* Footer info badge */}
-        <div className="text-[10px] text-muted-foreground/35 font-mono select-none font-bold">
-          v1.0
-        </div>
+        {/* Sidebar Collapse Toggle Icon */}
+        <button
+          onClick={toggleCollapse}
+          className="w-8 h-8 flex items-center justify-center rounded-lg text-muted-foreground hover:bg-white/5 hover:text-foreground transition-all focus:outline-none"
+          title={sidebarCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
+        >
+          {sidebarCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
+        </button>
       </div>
 
-      {/* Main Workspace Frame */}
-      <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Top Header Row */}
-        <header className="h-12 bg-zinc-950/45 border-b border-border/40 flex items-center justify-between px-4 select-none shrink-0">
+      {/* 2. Side drawer Details Pane */}
+      {!sidebarCollapsed && (
+        <div
+          style={{ width: `${sidebarWidth}px` }}
+          className="h-full overflow-hidden flex flex-col relative shrink-0 z-10"
+        >
+          {renderSidebarContent()}
+
+          {/* Draggable handle divider */}
+          <div
+            onMouseDown={handleSidebarMouseDown}
+            className="absolute right-0 top-0 w-[3px] h-full cursor-col-resize hover:bg-primary/40 bg-transparent transition-all z-50"
+          />
+        </div>
+      )}
+
+      {/* 3. Main REST Workspace Viewport */}
+      <div className="flex-1 flex flex-col overflow-hidden bg-zinc-950/20">
+        {/* Header bar */}
+        <header className="h-12 bg-zinc-950/45 border-b border-border/40 flex items-center justify-between px-4 select-none shrink-0 z-10">
           <div className="flex items-center gap-2">
             <h1 className="text-xs font-bold uppercase tracking-widest text-primary flex items-center gap-1.5">
               <span>REST Client</span>
@@ -113,17 +178,17 @@ export const AppLayout: React.FC = () => {
             </span>
           </div>
 
+          {/* Environment variables switcher */}
           <div className="flex items-center gap-3">
-            {/* Environment Dropdown Selector */}
             <div className="flex items-center gap-1.5 bg-zinc-900 border border-border/30 rounded-md px-2.5 py-1 text-xs">
               <Shield className="w-3.5 h-3.5 text-primary" />
               <select
                 value={activeEnvironmentId || "no-env"}
                 onChange={(e) => setActiveEnvironmentId(e.target.value)}
-                className="bg-transparent border-none text-[11px] font-medium text-foreground focus:outline-none cursor-pointer pr-1"
+                className="bg-transparent border-none text-[11px] font-semibold text-foreground focus:outline-none cursor-pointer pr-1"
               >
                 {environments.map((env) => (
-                  <option key={env.id} value={env.id} className="bg-zinc-950 text-foreground font-medium">
+                  <option key={env.id} value={env.id} className="bg-zinc-950 text-foreground font-semibold">
                     {env.name}
                   </option>
                 ))}
@@ -132,49 +197,44 @@ export const AppLayout: React.FC = () => {
           </div>
         </header>
 
-        {/* Dynamic Sidebar and Resizable Editor Panel split */}
-        <div className="flex-1 flex overflow-hidden">
-          {/* Side Drawer details pane */}
-          <div className="w-72 shrink-0 h-full overflow-hidden flex flex-col">
-            {renderSidebarContent()}
-          </div>
+        {/* Editor splits or welcomes */}
+        <div className="flex-1 flex flex-col overflow-hidden">
+          <TabsBar />
 
-          {/* Main workspace section */}
-          <div className="flex-1 h-full flex flex-col overflow-hidden bg-zinc-900/10">
-            <TabsBar />
-
-            <div className="flex-1 overflow-hidden">
-              {tabs.length > 0 && activeTabId ? (
-                <SplitPane
-                  direction="vertical"
-                  minSize={120}
-                  defaultSize={260}
-                  firstPane={<RequestBuilderFeature />}
-                  secondPane={<ResponseViewerFeature />}
-                  className="bg-zinc-950/20"
+          <div className="flex-1 overflow-hidden">
+            {tabs.length > 0 && activeTabId ? (
+              <SplitPane
+                direction="vertical"
+                minSize={120}
+                defaultSize={260}
+                firstPane={<RequestBuilderFeature />}
+                secondPane={<ResponseViewerFeature />}
+                className="bg-zinc-950/10"
+              />
+            ) : (
+              <div className="h-full flex items-center justify-center p-8 bg-zinc-950/5">
+                <EmptyState
+                  icon={Sparkles}
+                  title="Welcome to REST API Client"
+                  description="Create a new request tab, click an endpoint on your collection tree, or look through history to begin inspection."
+                  action={
+                    <button
+                      onClick={() => addTab()}
+                      className="flex items-center gap-1.5 px-3 py-1.5 bg-primary text-primary-foreground font-semibold text-xs rounded-md hover:bg-primary/95 transition-all focus:ring-2 focus:ring-primary/30"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                      Create New Tab
+                    </button>
+                  }
                 />
-              ) : (
-                <div className="h-full flex items-center justify-center p-8">
-                  <EmptyState
-                    icon={Sparkles}
-                    title="Welcome to REST API Client"
-                    description="Create a new request tab, click an endpoint on your collection tree, or look through history to begin inspection."
-                    action={
-                      <button
-                        onClick={() => addTab()}
-                        className="flex items-center gap-1.5 px-3 py-1.5 bg-primary text-primary-foreground font-semibold text-xs rounded-md hover:bg-primary/95 transition-colors"
-                      >
-                        <Plus className="w-3.5 h-3.5" />
-                        Create New Tab
-                      </button>
-                    }
-                  />
-                </div>
-              )}
-            </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
+
+      {/* Floating dynamic Toast Notifications Container */}
+      <ToastContainer />
     </div>
   )
 }
