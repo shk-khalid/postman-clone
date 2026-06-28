@@ -54,7 +54,7 @@ export const TabsBar: React.FC = () => {
                 "group flex items-center gap-2 h-full px-3.5 text-xs border-r border-border/30 cursor-pointer transition-all relative shrink-0",
                 isActive
                   ? "bg-zinc-900 text-foreground border-b-2 border-b-primary font-semibold"
-                  : "text-muted-foreground hover:bg-white/[0.02] hover:text-foreground"
+                  : "text-muted-foreground hover:bg-white/2 hover:text-foreground"
               )}
             >
               {/* Method Label */}

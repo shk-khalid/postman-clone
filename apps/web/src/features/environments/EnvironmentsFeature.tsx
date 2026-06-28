@@ -224,7 +224,7 @@ export const EnvironmentsFeature: React.FC = () => {
                   </thead>
                   <tbody>
                     {activeEnv.variables.map((item) => (
-                      <tr key={item.id} className="border-b border-border/20 hover:bg-white/[0.02]">
+                      <tr key={item.id} className="border-b border-border/20 hover:bg-white/2">
                         <td className="p-1 text-center">
                           <input
                             type="checkbox"

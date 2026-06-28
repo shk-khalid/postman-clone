@@ -263,7 +263,7 @@ export const ResponseViewerFeature: React.FC = () => {
                 </thead>
                 <tbody>
                   {Object.entries(response.headers).map(([key, val]) => (
-                    <tr key={key} className="border-b border-border/20 hover:bg-white/[0.02]">
+                    <tr key={key} className="border-b border-border/20 hover:bg-white/2">
                       <td className="p-2 border-r border-border/30 font-medium text-foreground">{key}</td>
                       <td className="p-2 text-muted-foreground font-mono">{val}</td>
                     </tr>

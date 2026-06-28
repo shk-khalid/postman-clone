@@ -5,7 +5,7 @@ export interface RequestPayload {
   url: string
   headers: Record<string, string>
   params: Record<string, string>
-  bodyType: "none" | "json" | "raw" | "form-data" | "x-www-form-urlencoded"
+  bodyType: "none" | "json" | "raw" | "form-data" | "x-www-form-urlencoded" | "binary"
   body: string
 }
 

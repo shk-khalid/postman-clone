@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react"
-import { Send, Plus, Trash2, Key, Info, HelpCircle, Save } from "lucide-react"
+import { Send, Plus, Trash2, Key, Info, HelpCircle, Save, Eye, EyeOff, MoreHorizontal, ChevronDown, Check } from "lucide-react"
 import { useTabStore, HTTPMethod, Tab, RequestHeader, RequestParam } from "@/store/tabStore"
 import { useHistoryStore } from "@/store/historyStore"
 import { useToastStore } from "@/store/toastStore"
@@ -22,9 +22,20 @@ export const RequestBuilderFeature: React.FC = () => {
   const [activeSubTab, setActiveSubTab] = useState<"params" | "authorization" | "headers" | "body">("params")
   const [jsonError, setJsonError] = useState<string | null>(null)
   const [resolvedUrl, setResolvedUrl] = useState("")
+  const [hideAutoHeaders, setHideAutoHeaders] = useState(true)
 
   // Save Modal/Dropdown trigger
   const [showSaveDropdown, setShowSaveDropdown] = useState(false)
+
+  const AUTO_GENERATED_HEADERS = [
+    { key: "Cache-Control", value: "no-cache", description: "" },
+    { key: "Postman-Token", value: "<calculated when request is sent>", description: "" },
+    { key: "Host", value: "<calculated when request is sent>", description: "" },
+    { key: "User-Agent", value: "PostmanRuntime/7.54.0", description: "" },
+    { key: "Accept", value: "*/*", description: "" },
+    { key: "Accept-Encoding", value: "gzip, deflate, br", description: "" },
+    { key: "Connection", value: "keep-alive", description: "" },
+  ]
 
   useEffect(() => {
     if (activeTab) {
@@ -76,8 +87,15 @@ export const RequestBuilderFeature: React.FC = () => {
           method: parsed.method,
           url: parsed.url,
           headers: parsed.headers,
+          params: parsed.params,
           body: parsed.body,
           bodyType: parsed.bodyType,
+          authType: parsed.authType,
+          bearerToken: parsed.bearerToken,
+          basicUsername: parsed.basicUsername,
+          basicPassword: parsed.basicPassword,
+          formData: parsed.formData,
+          urlEncoded: parsed.urlEncoded,
           isDirty: true,
         })
         showToast("Imported cURL", "success")
@@ -144,6 +162,34 @@ export const RequestBuilderFeature: React.FC = () => {
     } else {
       setJsonError(null)
     }
+  }
+
+  // Form Data changes
+  const handleFormDataChange = (id: string, field: any, val: any) => {
+    const updated = (activeTab.formData || []).map((row) => (row.id === id ? { ...row, [field]: val } : row))
+    const last = updated[updated.length - 1]
+    if (last && (last.key || last.value) && field !== "active") {
+      updated.push({ id: crypto.randomUUID(), key: "", value: "", type: "text" as const, active: true })
+    }
+    updateTab(activeTab.id, { formData: updated })
+  }
+
+  const handleFormDataDelete = (id: string) => {
+    updateTab(activeTab.id, { formData: (activeTab.formData || []).filter((row) => row.id !== id) })
+  }
+
+  // URL Encoded changes
+  const handleUrlEncodedChange = (id: string, field: any, val: any) => {
+    const updated = (activeTab.urlEncoded || []).map((row) => (row.id === id ? { ...row, [field]: val } : row))
+    const last = updated[updated.length - 1]
+    if (last && (last.key || last.value) && field !== "active") {
+      updated.push({ id: crypto.randomUUID(), key: "", value: "", active: true })
+    }
+    updateTab(activeTab.id, { urlEncoded: updated })
+  }
+
+  const handleUrlEncodedDelete = (id: string) => {
+    updateTab(activeTab.id, { urlEncoded: (activeTab.urlEncoded || []).filter((row) => row.id !== id) })
   }
 
   // Save to Collection Action
@@ -327,29 +373,29 @@ export const RequestBuilderFeature: React.FC = () => {
         {/* PARAMS TAB */}
         {activeSubTab === "params" && (
           <div className="space-y-2">
-            <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider pl-1">Query Parameters</span>
-            <div className="border border-border/30 rounded-md overflow-hidden">
+            <div className="flex items-center justify-between pl-1">
+              <span className="text-xs font-semibold text-foreground">Query Params</span>
+            </div>
+            <div className="border border-border/30 rounded-md overflow-hidden bg-zinc-950/40">
               <table className="w-full text-left text-[11px] border-collapse">
                 <thead>
                   <tr className="bg-white/5 border-b border-border/30 text-muted-foreground font-semibold">
-                    <th className="p-2 w-8 text-center">Active</th>
                     <th className="p-2 border-r border-border/30 w-1/4">Key</th>
                     <th className="p-2 border-r border-border/30 w-1/3">Value</th>
-                    <th className="p-2">Description</th>
-                    <th className="p-2 w-8"></th>
+                    <th className="p-2 border-r border-border/30">Description</th>
+                    <th className="p-2 w-28 text-right pr-3 font-normal normal-case">
+                      {/*
+                      <div className="flex items-center justify-end gap-2 text-muted-foreground/75 text-[11px]">
+                        <button className="hover:text-foreground transition-colors cursor-pointer">Bulk Edit</button>
+                        <MoreHorizontal className="w-3.5 h-3.5 cursor-pointer hover:text-foreground" />
+                      </div>
+                      */}
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
                   {activeTab.params.map((param) => (
-                    <tr key={param.id} className="border-b border-border/20 hover:bg-white/[0.02]">
-                      <td className="p-1 text-center">
-                        <input
-                          type="checkbox"
-                          checked={param.active}
-                          onChange={(e) => handleParamChange(param.id, "active", e.target.checked)}
-                          className="rounded border-border/50 text-primary w-3.5 h-3.5 bg-zinc-900 cursor-pointer"
-                        />
-                      </td>
+                    <tr key={param.id} className="border-b border-border/20 hover:bg-white/2">
                       <td className="p-1 border-r border-border/30">
                         <input
                           type="text"
@@ -368,7 +414,7 @@ export const RequestBuilderFeature: React.FC = () => {
                           className="w-full bg-transparent border-0 focus:ring-0 focus:outline-none p-1 text-foreground"
                         />
                       </td>
-                      <td className="p-1">
+                      <td className="p-1 border-r border-border/30">
                         <input
                           type="text"
                           placeholder="Description..."
@@ -461,29 +507,70 @@ export const RequestBuilderFeature: React.FC = () => {
         {/* HEADERS TAB */}
         {activeSubTab === "headers" && (
           <div className="space-y-2">
-            <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider pl-1">Request Headers</span>
-            <div className="border border-border/30 rounded-md overflow-hidden">
+            <div className="flex items-center justify-between px-1">
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-semibold text-foreground">Headers</span>
+                <button
+                  onClick={() => setHideAutoHeaders(!hideAutoHeaders)}
+                  className="flex items-center gap-1.5 px-2 py-0.5 rounded bg-white/5 hover:bg-white/10 text-[10px] text-muted-foreground transition-colors font-medium border border-border/10 cursor-pointer"
+                >
+                  {hideAutoHeaders ? (
+                    <>
+                      <Eye className="w-3 h-3 text-muted-foreground/80" />
+                      <span>7 hidden</span>
+                    </>
+                  ) : (
+                    <>
+                      <EyeOff className="w-3 h-3 text-muted-foreground/80" />
+                      <span>Hide auto-generated headers</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+            <div className="border border-border/30 rounded-md overflow-hidden bg-zinc-950/40">
               <table className="w-full text-left text-[11px] border-collapse">
                 <thead>
                   <tr className="bg-white/5 border-b border-border/30 text-muted-foreground font-semibold">
-                    <th className="p-2 w-8 text-center">Active</th>
                     <th className="p-2 border-r border-border/30 w-1/4">Key</th>
                     <th className="p-2 border-r border-border/30 w-1/3">Value</th>
-                    <th className="p-2">Description</th>
-                    <th className="p-2 w-8"></th>
+                    <th className="p-2 border-r border-border/30">Description</th>
+                    <th className="p-2 w-44 text-right pr-3 font-normal normal-case">
+                      {/*
+                      <div className="flex items-center justify-end gap-2.5 text-muted-foreground/75 text-[11px]">
+                        <button className="hover:text-foreground transition-colors cursor-pointer">Bulk Edit</button>
+                        <button className="flex items-center gap-0.5 hover:text-foreground transition-colors cursor-pointer">
+                          <span>Presets</span>
+                          <ChevronDown className="w-3 h-3" />
+                        </button>
+                        <MoreHorizontal className="w-3.5 h-3.5 cursor-pointer hover:text-foreground" />
+                      </div>
+                      */}
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
-                  {activeTab.headers.map((header) => (
-                    <tr key={header.id} className="border-b border-border/20 hover:bg-white/[0.02]">
-                      <td className="p-1 text-center">
-                        <input
-                          type="checkbox"
-                          checked={header.active}
-                          onChange={(e) => handleHeaderChange(header.id, "active", e.target.checked)}
-                          className="rounded border-border/50 text-primary w-3.5 h-3.5 bg-zinc-900 cursor-pointer"
-                        />
+                  {!hideAutoHeaders && AUTO_GENERATED_HEADERS.map((autoH, index) => (
+                    <tr key={`auto-${index}`} className="border-b border-border/20 bg-white/1 text-muted-foreground hover:bg-white/2">
+                      <td className="p-1 border-r border-border/30 relative">
+                        <div className="flex items-center justify-between px-1.5 text-[11px] font-mono">
+                          <span className="text-muted-foreground/75">{autoH.key}</span>
+                          <span title="This header is automatically added by the request agent." className="shrink-0 flex items-center">
+                            <Info className="w-3 h-3 text-muted-foreground/45 cursor-help" />
+                          </span>
+                        </div>
                       </td>
+                      <td className="p-1 border-r border-border/30">
+                        <span className="px-1.5 text-[11px] font-mono text-muted-foreground/60">{autoH.value}</span>
+                      </td>
+                      <td className="p-1 border-r border-border/30">
+                        <span className="px-1.5 text-[11px] text-muted-foreground/40 italic">Auto-generated</span>
+                      </td>
+                      <td className="p-1 text-center"></td>
+                    </tr>
+                  ))}
+                  {activeTab.headers.map((header) => (
+                    <tr key={header.id} className="border-b border-border/20 hover:bg-white/2">
                       <td className="p-1 border-r border-border/30 relative">
                         <input
                           type="text"
@@ -508,7 +595,7 @@ export const RequestBuilderFeature: React.FC = () => {
                           className="w-full bg-transparent border-0 focus:ring-0 focus:outline-none p-1 text-foreground"
                         />
                       </td>
-                      <td className="p-1">
+                      <td className="p-1 border-r border-border/30">
                         <input
                           type="text"
                           placeholder="Description..."
@@ -538,7 +625,7 @@ export const RequestBuilderFeature: React.FC = () => {
         {/* BODY TAB */}
         {activeSubTab === "body" && (
           <div className="flex flex-col h-full gap-2 min-h-[160px]">
-            <div className="flex items-center gap-4 text-xs shrink-0">
+            <div className="flex items-center gap-4 text-xs shrink-0 select-none pb-1">
               <span className="text-muted-foreground font-semibold">Body Type:</span>
               <label className="flex items-center gap-1.5 cursor-pointer text-foreground font-medium">
                 <input
@@ -547,25 +634,67 @@ export const RequestBuilderFeature: React.FC = () => {
                   onChange={() => updateTab(activeTab.id, { bodyType: "none" })}
                   className="text-primary w-3 h-3 bg-zinc-900 border-border/50"
                 />
-                None
+                none
               </label>
               <label className="flex items-center gap-1.5 cursor-pointer text-foreground font-medium">
                 <input
                   type="radio"
-                  checked={activeTab.bodyType === "json"}
-                  onChange={() => updateTab(activeTab.id, { bodyType: "json" })}
+                  checked={activeTab.bodyType === "form-data"}
+                  onChange={() => updateTab(activeTab.id, { bodyType: "form-data" })}
                   className="text-primary w-3 h-3 bg-zinc-900 border-border/50"
                 />
-                JSON (Application/JSON)
+                form-data
               </label>
               <label className="flex items-center gap-1.5 cursor-pointer text-foreground font-medium">
                 <input
                   type="radio"
-                  checked={activeTab.bodyType === "raw"}
-                  onChange={() => updateTab(activeTab.id, { bodyType: "raw" })}
+                  checked={activeTab.bodyType === "x-www-form-urlencoded"}
+                  onChange={() => updateTab(activeTab.id, { bodyType: "x-www-form-urlencoded" })}
                   className="text-primary w-3 h-3 bg-zinc-900 border-border/50"
                 />
-                Text (Plaintext)
+                x-www-form-urlencoded
+              </label>
+              <div className="flex items-center gap-1">
+                <label className="flex items-center gap-1.5 cursor-pointer text-foreground font-medium">
+                  <input
+                    type="radio"
+                    checked={activeTab.bodyType === "json" || activeTab.bodyType === "raw"}
+                    onChange={() => {
+                      if (activeTab.bodyType !== "json" && activeTab.bodyType !== "raw") {
+                        updateTab(activeTab.id, { bodyType: "json" })
+                      }
+                    }}
+                    className="text-primary w-3 h-3 bg-zinc-900 border-border/50"
+                  />
+                  raw
+                </label>
+                {(activeTab.bodyType === "json" || activeTab.bodyType === "raw") && (
+                  <select
+                    value={activeTab.bodyType}
+                    onChange={(e) => updateTab(activeTab.id, { bodyType: e.target.value as any })}
+                    className="bg-transparent border-0 text-primary hover:text-primary-foreground focus:ring-0 focus:outline-none text-[11px] cursor-pointer font-semibold py-0 pl-1"
+                  >
+                    <option value="json" className="bg-zinc-900">JSON</option>
+                    <option value="raw" className="bg-zinc-900">Text</option>
+                  </select>
+                )}
+              </div>
+              <label className="flex items-center gap-1.5 cursor-pointer text-foreground font-medium">
+                <input
+                  type="radio"
+                  checked={activeTab.bodyType === "binary"}
+                  onChange={() => updateTab(activeTab.id, { bodyType: "binary" })}
+                  className="text-primary w-3 h-3 bg-zinc-900 border-border/50"
+                />
+                binary
+              </label>
+              <label className="flex items-center gap-1.5 cursor-not-allowed text-muted-foreground font-medium opacity-50">
+                <input
+                  type="radio"
+                  disabled
+                  className="text-primary w-3 h-3 bg-zinc-900 border-border/50"
+                />
+                GraphQL
               </label>
             </div>
 
@@ -598,6 +727,161 @@ export const RequestBuilderFeature: React.FC = () => {
                   onChange={handleBodyChange}
                   language="plaintext"
                 />
+              </div>
+            )}
+
+            {activeTab.bodyType === "form-data" && (
+              <div className="flex-1 overflow-auto border border-border/30 rounded-md">
+                <table className="w-full text-left text-[11px] border-collapse">
+                  <thead>
+                    <tr className="bg-white/5 border-b border-border/30 text-muted-foreground font-semibold">
+                      <th className="p-2 w-8 text-center">Active</th>
+                      <th className="p-2 border-r border-border/30 w-1/3">Key</th>
+                      <th className="p-2 border-r border-border/30 w-1/3">Value</th>
+                      <th className="p-2">Type</th>
+                      <th className="p-2 w-8"></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {(activeTab.formData || []).map((row) => (
+                      <tr key={row.id} className="border-b border-border/20 hover:bg-white/2">
+                        <td className="p-1 text-center">
+                          <input
+                            type="checkbox"
+                            checked={row.active}
+                            onChange={(e) => handleFormDataChange(row.id, "active", e.target.checked)}
+                            className="rounded border-border/50 text-primary w-3.5 h-3.5 bg-zinc-900 cursor-pointer"
+                          />
+                        </td>
+                        <td className="p-1 border-r border-border/30">
+                          <input
+                            type="text"
+                            placeholder="Key..."
+                            value={row.key}
+                            onChange={(e) => handleFormDataChange(row.id, "key", e.target.value)}
+                            className="w-full bg-transparent border-0 focus:ring-0 focus:outline-none p-1 text-foreground"
+                          />
+                        </td>
+                        <td className="p-1 border-r border-border/30">
+                          {row.type === "file" ? (
+                            <div className="flex items-center gap-1.5 p-1 text-muted-foreground">
+                              <span className="bg-white/5 px-2 py-0.5 rounded text-[10px] text-foreground font-mono">File:</span>
+                              <span className="truncate">{row.value || "Select file..."}</span>
+                            </div>
+                          ) : (
+                            <input
+                              type="text"
+                              placeholder="Value..."
+                              value={row.value}
+                              onChange={(e) => handleFormDataChange(row.id, "value", e.target.value)}
+                              className="w-full bg-transparent border-0 focus:ring-0 focus:outline-none p-1 text-foreground"
+                            />
+                          )}
+                        </td>
+                        <td className="p-1">
+                          <select
+                            value={row.type}
+                            onChange={(e) => handleFormDataChange(row.id, "type", e.target.value)}
+                            className="bg-transparent border-0 text-foreground focus:ring-0 focus:outline-none text-[11px] cursor-pointer"
+                          >
+                            <option value="text" className="bg-zinc-900">Text</option>
+                            <option value="file" className="bg-zinc-900">File</option>
+                          </select>
+                        </td>
+                        <td className="p-1 text-center">
+                          {(row.key || row.value) && (
+                            <button
+                              onClick={() => handleFormDataDelete(row.id)}
+                              className="text-muted-foreground hover:text-rose-400 p-0.5 rounded"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+
+            {activeTab.bodyType === "x-www-form-urlencoded" && (
+              <div className="flex-1 overflow-auto border border-border/30 rounded-md">
+                <table className="w-full text-left text-[11px] border-collapse">
+                  <thead>
+                    <tr className="bg-white/5 border-b border-border/30 text-muted-foreground font-semibold">
+                      <th className="p-2 w-8 text-center">Active</th>
+                      <th className="p-2 border-r border-border/30 w-1/3">Key</th>
+                      <th className="p-2">Value</th>
+                      <th className="p-2 w-8"></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {(activeTab.urlEncoded || []).map((row) => (
+                      <tr key={row.id} className="border-b border-border/20 hover:bg-white/2">
+                        <td className="p-1 text-center">
+                          <input
+                            type="checkbox"
+                            checked={row.active}
+                            onChange={(e) => handleUrlEncodedChange(row.id, "active", e.target.checked)}
+                            className="rounded border-border/50 text-primary w-3.5 h-3.5 bg-zinc-900 cursor-pointer"
+                          />
+                        </td>
+                        <td className="p-1 border-r border-border/30">
+                          <input
+                            type="text"
+                            placeholder="Key..."
+                            value={row.key}
+                            onChange={(e) => handleUrlEncodedChange(row.id, "key", e.target.value)}
+                            className="w-full bg-transparent border-0 focus:ring-0 focus:outline-none p-1 text-foreground"
+                          />
+                        </td>
+                        <td className="p-1">
+                          <input
+                            type="text"
+                            placeholder="Value..."
+                            value={row.value}
+                            onChange={(e) => handleUrlEncodedChange(row.id, "value", e.target.value)}
+                            className="w-full bg-transparent border-0 focus:ring-0 focus:outline-none p-1 text-foreground"
+                          />
+                        </td>
+                        <td className="p-1 text-center">
+                          {(row.key || row.value) && (
+                            <button
+                              onClick={() => handleUrlEncodedDelete(row.id)}
+                              className="text-muted-foreground hover:text-rose-400 p-0.5 rounded"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+
+            {activeTab.bodyType === "binary" && (
+              <div className="flex-1 flex flex-col items-center justify-center border border-border/20 border-dashed rounded-lg p-6 bg-zinc-900/10 text-center">
+                <span className="text-xs text-muted-foreground font-semibold mb-2">Select a file to send in the request body</span>
+                <input
+                  type="file"
+                  id="binary-file-input"
+                  className="hidden"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0]
+                    if (file) {
+                      updateTab(activeTab.id, { body: file.name })
+                    }
+                  }}
+                />
+                <label
+                  htmlFor="binary-file-input"
+                  className="px-3 py-1.5 rounded bg-white/5 hover:bg-white/10 text-xs font-semibold text-foreground border border-border/25 cursor-pointer transition-all"
+                >
+                  {activeTab.body || "Select File"}
+                </label>
               </div>
             )}
           </div>

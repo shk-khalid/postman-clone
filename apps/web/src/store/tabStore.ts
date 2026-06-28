@@ -50,7 +50,7 @@ export interface Tab {
   url: string
   headers: RequestHeader[]
   params: RequestParam[]
-  bodyType: "none" | "json" | "raw" | "form-data" | "x-www-form-urlencoded"
+  bodyType: "none" | "json" | "raw" | "form-data" | "x-www-form-urlencoded" | "binary"
   body: string
   authType: "none" | "bearer" | "basic"
   bearerToken: string
