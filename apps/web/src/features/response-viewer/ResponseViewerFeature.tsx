@@ -1,5 +1,5 @@
 import React, { useState } from "react"
-import { Send, Eye, Copy, Download, Check, Search, Info } from "lucide-react"
+import { Send, Eye, Copy, Download, Check, Search } from "lucide-react"
 import { useTabStore } from "@/store/tabStore"
 import { useToastStore } from "@/store/toastStore"
 import { MonacoWrapper } from "@/components/ui/MonacoWrapper"
@@ -30,11 +30,8 @@ export const ResponseViewerFeature: React.FC = () => {
     )
   }
 
-  if (activeTab.loading) {
-    return <LoadingState message="Sending request to mock server..." />
-  }
-
-  if (!activeTab.response) {
+  // If not loading and has no response, show empty state
+  if (!activeTab.response && !activeTab.loading) {
     return (
       <EmptyState
         icon={Eye}
@@ -44,9 +41,10 @@ export const ResponseViewerFeature: React.FC = () => {
     )
   }
 
-  const { response } = activeTab
+  const response = activeTab.response
 
   const handleCopyBody = () => {
+    if (!response) return
     try {
       navigator.clipboard.writeText(response.body)
       setCopiedBody(true)
@@ -58,6 +56,7 @@ export const ResponseViewerFeature: React.FC = () => {
   }
 
   const handleCopyHeaders = () => {
+    if (!response) return
     try {
       const headersStr = Object.entries(response.headers)
         .map(([k, v]) => `${k}: ${v}`)
@@ -72,6 +71,7 @@ export const ResponseViewerFeature: React.FC = () => {
   }
 
   const handleDownload = () => {
+    if (!response) return
     try {
       const blob = new Blob([response.body], { type: "application/json" })
       const url = URL.createObjectURL(blob)
@@ -89,15 +89,15 @@ export const ResponseViewerFeature: React.FC = () => {
   }
 
   const getStatusBadgeColor = (status: number) => {
-    if (status >= 200 && status < 300) return "bg-emerald-500/10 text-emerald-500 border border-emerald-500/20"
-    if (status >= 300 && status < 400) return "bg-blue-500/10 text-blue-400 border border-blue-500/20"
-    if (status >= 400 && status < 500) return "bg-amber-500/10 text-amber-500 border border-amber-500/20"
-    return "bg-rose-500/10 text-rose-500 border border-rose-500/20"
+    if (status >= 200 && status < 300) return "bg-emerald-500/10 text-emerald-600 dark:text-emerald-500 border border-emerald-500/20"
+    if (status >= 300 && status < 400) return "bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20"
+    if (status >= 400 && status < 500) return "bg-amber-500/10 text-amber-600 dark:text-amber-500 border border-amber-500/20"
+    return "bg-rose-500/10 text-rose-600 dark:text-rose-500 border border-rose-500/20"
   }
 
   // Simple highlight calculator count
   const getSearchMatchCount = () => {
-    if (!searchTerm.trim()) return null
+    if (!response || !searchTerm.trim()) return null
     try {
       const regex = new RegExp(searchTerm.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, "\\$&"), "gi")
       const matches = response.body.match(regex)
@@ -116,23 +116,33 @@ export const ResponseViewerFeature: React.FC = () => {
         <span className="text-xs font-semibold text-foreground tracking-tight">Response Details</span>
 
         <div className="flex items-center gap-2">
-          {/* Status */}
-          <span className={cn(
-            "text-[10px] font-bold px-2 py-0.5 rounded-full font-mono uppercase tracking-wide",
-            getStatusBadgeColor(response.status)
-          )}>
-            Status: {response.status} {response.statusText}
-          </span>
+          {response ? (
+            <>
+              {/* Status */}
+              <span className={cn(
+                "text-[10px] font-bold px-2 py-0.5 rounded-full font-mono uppercase tracking-wide",
+                getStatusBadgeColor(response.status)
+              )}>
+                Status: {response.status} {response.statusText}
+              </span>
 
-          {/* Duration */}
-          <span className="text-[10px] font-bold bg-muted text-muted-foreground border border-border px-2 py-0.5 rounded-full font-mono">
-            Time: {response.duration} ms
-          </span>
+              {/* Duration */}
+              <span className="text-[10px] font-bold bg-muted text-muted-foreground border border-border px-2 py-0.5 rounded-full font-mono">
+                Time: {response.duration} ms
+              </span>
 
-          {/* Size */}
-          <span className="text-[10px] font-bold bg-muted text-muted-foreground border border-border px-2 py-0.5 rounded-full font-mono">
-            Size: {(response.size / 1024).toFixed(2)} KB
-          </span>
+              {/* Size */}
+              <span className="text-[10px] font-bold bg-muted text-muted-foreground border border-border px-2 py-0.5 rounded-full font-mono">
+                Size: {(response.size / 1024).toFixed(2)} KB
+              </span>
+            </>
+          ) : (
+            activeTab.loading && (
+              <span className="text-[10px] font-bold bg-muted text-muted-foreground border border-border px-2 py-0.5 rounded-full font-mono animate-pulse">
+                Sending...
+              </span>
+            )
+          )}
         </div>
       </div>
 
@@ -143,11 +153,13 @@ export const ResponseViewerFeature: React.FC = () => {
             <button
               key={tab}
               onClick={() => setActiveSubTab(tab)}
+              disabled={!response && activeTab.loading}
               className={cn(
-                "px-4 py-2 text-xs font-semibold border-b-2 transition-all capitalize -mb-px",
+                "px-4 py-2 text-xs font-semibold border-b-2 transition-all capitalize -mb-px cursor-pointer",
                 activeSubTab === tab
                   ? "border-primary text-foreground"
-                  : "border-transparent text-muted-foreground hover:text-foreground"
+                  : "border-transparent text-muted-foreground hover:text-foreground",
+                (!response && activeTab.loading) && "opacity-50 cursor-not-allowed"
               )}
             >
               {tab}
@@ -159,13 +171,17 @@ export const ResponseViewerFeature: React.FC = () => {
           {activeSubTab === "body" && (
             <>
               {/* Internal Search */}
-              <div className="relative flex items-center bg-background border border-border rounded-md px-2 h-7 w-44">
+              <div className={cn(
+                "relative flex items-center bg-background border border-border rounded-md px-2 h-7 w-44",
+                (!response || activeTab.loading) && "opacity-50 cursor-not-allowed"
+              )}>
                 <Search className="w-3.5 h-3.5 text-muted-foreground mr-1.5 shrink-0" />
                 <input
                   type="text"
                   placeholder="Find in body..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
+                  disabled={!response || activeTab.loading}
                   className="w-full bg-transparent border-0 text-[10px] text-foreground focus:ring-0 focus:outline-none placeholder-muted-foreground"
                 />
                 {matchCount !== null && (
@@ -176,21 +192,28 @@ export const ResponseViewerFeature: React.FC = () => {
               </div>
 
               {/* Format Toggle */}
-              <div className="flex bg-background border border-border rounded-md p-0.5 text-[10px]">
+              <div className={cn(
+                "flex bg-background border border-border rounded-md p-0.5 text-[10px]",
+                (!response || activeTab.loading) && "opacity-50 cursor-not-allowed"
+              )}>
                 <button
                   onClick={() => setFormatMode("pretty")}
+                  disabled={!response || activeTab.loading}
                   className={cn(
-                    "px-2 py-0.5 rounded font-medium",
-                    formatMode === "pretty" ? "bg-white/10 text-foreground" : "text-muted-foreground hover:text-foreground"
+                    "px-2 py-0.5 rounded font-medium cursor-pointer",
+                    formatMode === "pretty" ? "bg-white/10 text-foreground" : "text-muted-foreground hover:text-foreground",
+                    (!response || activeTab.loading) && "cursor-not-allowed"
                   )}
                 >
                   Pretty
                 </button>
                 <button
                   onClick={() => setFormatMode("raw")}
+                  disabled={!response || activeTab.loading}
                   className={cn(
-                    "px-2 py-0.5 rounded font-medium",
-                    formatMode === "raw" ? "bg-white/10 text-foreground" : "text-muted-foreground hover:text-foreground"
+                    "px-2 py-0.5 rounded font-medium cursor-pointer",
+                    formatMode === "raw" ? "bg-white/10 text-foreground" : "text-muted-foreground hover:text-foreground",
+                    (!response || activeTab.loading) && "cursor-not-allowed"
                   )}
                 >
                   Raw
@@ -200,7 +223,11 @@ export const ResponseViewerFeature: React.FC = () => {
               {/* Copy Body */}
               <button
                 onClick={handleCopyBody}
-                className="p-1.5 rounded-md border border-border bg-background text-muted-foreground hover:text-foreground"
+                disabled={!response || activeTab.loading}
+                className={cn(
+                  "p-1.5 rounded-md border border-border bg-background text-muted-foreground hover:text-foreground cursor-pointer",
+                  (!response || activeTab.loading) && "opacity-50 cursor-not-allowed"
+                )}
                 title="Copy body payload"
               >
                 {copiedBody ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
@@ -211,7 +238,11 @@ export const ResponseViewerFeature: React.FC = () => {
           {activeSubTab === "headers" && (
             <button
               onClick={handleCopyHeaders}
-              className="flex items-center gap-1 px-2.5 py-1 text-[10px] font-semibold rounded border border-border bg-background text-muted-foreground hover:text-foreground h-7"
+              disabled={!response || activeTab.loading}
+              className={cn(
+                "flex items-center gap-1 px-2.5 py-1 text-[10px] font-semibold rounded border border-border bg-background text-muted-foreground hover:text-foreground h-7 cursor-pointer",
+                (!response || activeTab.loading) && "opacity-50 cursor-not-allowed"
+              )}
               title="Copy all headers"
             >
               {copiedHeaders ? <Check className="w-3 h-3 text-emerald-500" /> : <Copy className="w-3 h-3" />}
@@ -222,7 +253,11 @@ export const ResponseViewerFeature: React.FC = () => {
           {/* Download Button */}
           <button
             onClick={handleDownload}
-            className="p-1.5 rounded-md border border-border bg-background text-muted-foreground hover:text-foreground h-7 flex items-center justify-center"
+            disabled={!response || activeTab.loading}
+            className={cn(
+              "p-1.5 rounded-md border border-border bg-background text-muted-foreground hover:text-foreground h-7 flex items-center justify-center cursor-pointer",
+              (!response || activeTab.loading) && "opacity-50 cursor-not-allowed"
+            )}
             title="Download payload"
           >
             <Download className="w-3.5 h-3.5" />
@@ -232,47 +267,55 @@ export const ResponseViewerFeature: React.FC = () => {
 
       {/* Viewport content */}
       <div className="flex-1 overflow-auto bg-card border border-border/20 rounded-lg p-2.5">
-        {activeSubTab === "body" && (
-          <div className="w-full h-full min-h-[140px]">
-            {formatMode === "pretty" ? (
-              <MonacoWrapper
-                value={response.body}
-                language="json"
-                readOnly
-              />
-            ) : (
-              <MonacoWrapper
-                value={response.body}
-                language="plaintext"
-                readOnly
-              />
+        {activeTab.loading ? (
+          <div className="w-full h-full flex items-center justify-center min-h-[140px]">
+            <LoadingState message="Sending request..." />
+          </div>
+        ) : response ? (
+          <div className="w-full h-full">
+            {activeSubTab === "body" && (
+              <div className="w-full h-full min-h-[140px]">
+                {formatMode === "pretty" ? (
+                  <MonacoWrapper
+                    value={response.body}
+                    language="json"
+                    readOnly
+                  />
+                ) : (
+                  <MonacoWrapper
+                    value={response.body}
+                    language="plaintext"
+                    readOnly
+                  />
+                )}
+              </div>
+            )}
+
+            {activeSubTab === "headers" && (
+              <div className="space-y-2">
+                <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider pl-1">Response Headers</span>
+                <div className="border border-border/30 rounded-md overflow-hidden">
+                  <table className="w-full text-left text-[11px] border-collapse">
+                    <thead>
+                      <tr className="bg-white/5 border-b border-border/30 text-muted-foreground font-semibold">
+                        <th className="p-2 border-r border-border/30 w-1/3">Header Key</th>
+                        <th className="p-2">Header Value</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {Object.entries(response.headers).map(([key, val]) => (
+                        <tr key={key} className="border-b border-border/20 hover:bg-white/2">
+                          <td className="p-2 border-r border-border/30 font-medium text-foreground">{key}</td>
+                          <td className="p-2 text-muted-foreground font-mono">{val}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
             )}
           </div>
-        )}
-
-        {activeSubTab === "headers" && (
-          <div className="space-y-2">
-            <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider pl-1">Response Headers</span>
-            <div className="border border-border/30 rounded-md overflow-hidden">
-              <table className="w-full text-left text-[11px] border-collapse">
-                <thead>
-                  <tr className="bg-white/5 border-b border-border/30 text-muted-foreground font-semibold">
-                    <th className="p-2 border-r border-border/30 w-1/3">Header Key</th>
-                    <th className="p-2">Header Value</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {Object.entries(response.headers).map(([key, val]) => (
-                    <tr key={key} className="border-b border-border/20 hover:bg-white/2">
-                      <td className="p-2 border-r border-border/30 font-medium text-foreground">{key}</td>
-                      <td className="p-2 text-muted-foreground font-mono">{val}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        )}
+        ) : null}
       </div>
     </div>
   )

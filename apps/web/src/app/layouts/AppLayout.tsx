@@ -20,7 +20,7 @@ import { cn } from "@/lib/utils"
 
 export const AppLayout: React.FC = () => {
   const { activeFeature, setActiveFeature, environments, activeEnvironmentId, setActiveEnvironmentId, theme } = useWorkspaceStore()
-  const { tabs, activeTabId, addTab } = useTabStore()
+  const { tabs, activeTabId, addTab, setActiveTabId } = useTabStore()
   const { fetchCollections } = useCollectionStore()
   const { fetchEnvironments } = useWorkspaceStore()
   const { fetchHistory } = useHistoryStore()
@@ -37,6 +37,21 @@ export const AppLayout: React.FC = () => {
     fetchHistory()
     fetchSettings()
   }, [])
+
+  // Global hotkeys (Alt + [1-9] for switching tabs)
+  useEffect(() => {
+    const handleGlobalShortcuts = (e: KeyboardEvent) => {
+      if (e.altKey && e.key >= "1" && e.key <= "9") {
+        const index = parseInt(e.key, 10) - 1
+        if (index >= 0 && index < tabs.length) {
+          e.preventDefault()
+          setActiveTabId(tabs[index].id)
+        }
+      }
+    }
+    window.addEventListener("keydown", handleGlobalShortcuts)
+    return () => window.removeEventListener("keydown", handleGlobalShortcuts)
+  }, [tabs, setActiveTabId])
 
   const menuItems = [
     { id: "collections", label: "Collections", icon: Folder },
@@ -224,7 +239,7 @@ export const AppLayout: React.FC = () => {
                 <SplitPane
                   direction="vertical"
                   minSize={120}
-                  defaultSize={260}
+                  defaultSize={380}
                   firstPane={<RequestBuilderFeature />}
                   secondPane={<ResponseViewerFeature />}
                   className="bg-muted/10"

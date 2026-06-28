@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react"
+import React, { useState, useEffect, useRef } from "react"
 import { Send, Plus, Trash2, Key, Info, HelpCircle, Save, Eye, EyeOff, MoreHorizontal, ChevronDown, Check } from "lucide-react"
 import { useTabStore, HTTPMethod, Tab, RequestHeader, RequestParam } from "@/store/tabStore"
 import { useHistoryStore } from "@/store/historyStore"
@@ -26,6 +26,9 @@ export const RequestBuilderFeature: React.FC = () => {
 
   // Save Modal/Dropdown trigger
   const [showSaveDropdown, setShowSaveDropdown] = useState(false)
+  const [showAuthDropdown, setShowAuthDropdown] = useState(false)
+
+  const urlInputRef = useRef<HTMLInputElement>(null)
 
   const AUTO_GENERATED_HEADERS = [
     { key: "Cache-Control", value: "no-cache", description: "" },
@@ -63,6 +66,10 @@ export const RequestBuilderFeature: React.FC = () => {
       if (activeTabId) {
         closeTab(activeTabId)
       }
+    },
+    onFocusUrl: () => {
+      urlInputRef.current?.focus()
+      urlInputRef.current?.select()
     },
     onEscape: () => {
       setShowSaveDropdown(false)
@@ -286,9 +293,10 @@ export const RequestBuilderFeature: React.FC = () => {
 
           <div className="flex-1 relative">
             <input
+              ref={urlInputRef}
               type="text"
               disabled={activeTab.loading}
-              placeholder="Enter request URL (e.g. https://{{base_url}}/users)"
+              placeholder="Enter request URL (e.g. https://{{base_url}}/users) - Alt + L to focus"
               value={activeTab.url}
               onChange={handleUrlChange}
               className="w-full bg-card border border-border rounded-md px-3 text-xs text-foreground placeholder-muted-foreground focus:outline-none focus:border-primary/50 transition-colors h-9 disabled:opacity-50 disabled:cursor-not-allowed"
@@ -300,8 +308,8 @@ export const RequestBuilderFeature: React.FC = () => {
             <button
               onClick={() => setShowSaveDropdown(prev => !prev)}
               disabled={activeTab.loading}
-              className="flex items-center justify-center p-2.5 bg-card border border-border text-muted-foreground hover:text-foreground rounded-md transition-colors disabled:opacity-50 h-9"
-              title="Save Request"
+              className="flex items-center justify-center p-2.5 bg-card border border-border text-muted-foreground hover:text-foreground rounded-md transition-colors disabled:opacity-50 h-9 cursor-pointer"
+              title="Save Request (Ctrl + S / ⌘ + S)"
             >
               <Save className="w-4 h-4" />
             </button>
@@ -330,7 +338,8 @@ export const RequestBuilderFeature: React.FC = () => {
           <button
             onClick={handleSend}
             disabled={activeTab.loading}
-            className="flex items-center gap-1.5 px-4 h-9 bg-primary text-primary-foreground font-semibold text-xs rounded-md hover:bg-primary/95 transition-colors disabled:opacity-50"
+            className="flex items-center gap-1.5 px-4 h-9 bg-primary text-primary-foreground font-semibold text-xs rounded-md hover:bg-primary/95 transition-colors disabled:opacity-50 cursor-pointer"
+            title="Send Request (Ctrl + Enter / ⌘ + Enter)"
           >
             {activeTab.loading ? (
               <div className="w-3.5 h-3.5 border-2 border-primary-foreground/35 border-t-primary-foreground rounded-full animate-spin" />
@@ -448,17 +457,49 @@ export const RequestBuilderFeature: React.FC = () => {
         {/* AUTHORIZATION TAB */}
         {activeSubTab === "authorization" && (
           <div className="space-y-4 max-w-lg p-1.5">
-            <div className="flex flex-col gap-1.5">
+            <div className="flex flex-col gap-1.5 shrink-0 relative">
               <label className="text-xs font-semibold text-foreground">Auth Type</label>
-              <select
-                value={activeTab.authType}
-                onChange={(e) => updateTab(activeTab.id, { authType: e.target.value as any })}
-                className="bg-zinc-900 border border-border/30 rounded-md px-3 py-1.5 text-xs text-foreground focus:outline-none focus:border-primary/50"
+              <button
+                type="button"
+                onClick={() => setShowAuthDropdown(!showAuthDropdown)}
+                className="flex items-center justify-between bg-background border border-border/30 rounded-md px-3 py-1.5 text-xs text-foreground focus:outline-none focus:border-primary/50 text-left h-8 cursor-pointer w-48"
               >
-                <option value="none">No Auth</option>
-                <option value="bearer">Bearer Token</option>
-                <option value="basic">Basic Auth</option>
-              </select>
+                <span>
+                  {activeTab.authType === "none" && "No Auth"}
+                  {activeTab.authType === "bearer" && "Bearer Token"}
+                  {activeTab.authType === "basic" && "Basic Auth"}
+                </span>
+                <ChevronDown className="w-3.5 h-3.5 text-muted-foreground ml-2 shrink-0" />
+              </button>
+
+              {showAuthDropdown && (
+                <>
+                  <div className="fixed inset-0 z-40" onClick={() => setShowAuthDropdown(false)} />
+                  <div className="absolute top-14 left-0 w-48 bg-card border border-border rounded-md shadow-xl py-1 z-50 text-xs">
+                    {(["none", "bearer", "basic"] as const).map((type) => (
+                      <button
+                        key={type}
+                        type="button"
+                        onClick={() => {
+                          updateTab(activeTab.id, { authType: type })
+                          setShowAuthDropdown(false)
+                        }}
+                        className={cn(
+                          "w-full text-left px-3 py-1.5 hover:bg-muted text-foreground cursor-pointer flex items-center justify-between",
+                          activeTab.authType === type && "font-semibold bg-muted/50"
+                        )}
+                      >
+                        <span>
+                          {type === "none" && "No Auth"}
+                          {type === "bearer" && "Bearer Token"}
+                          {type === "basic" && "Basic Auth"}
+                        </span>
+                        {activeTab.authType === type && <Check className="w-3.5 h-3.5 text-primary" />}
+                      </button>
+                    ))}
+                  </div>
+                </>
+              )}
             </div>
 
             {activeTab.authType === "none" && (
@@ -469,20 +510,20 @@ export const RequestBuilderFeature: React.FC = () => {
             )}
 
             {activeTab.authType === "bearer" && (
-              <div className="flex flex-col gap-2 border border-border/20 p-3 rounded-lg bg-zinc-900/40">
+              <div className="flex flex-col gap-2 border border-border/20 p-3 rounded-lg bg-muted/30">
                 <label className="text-[11px] font-semibold text-muted-foreground">Token</label>
                 <input
                   type="text"
                   placeholder="Bearer token or {{token}}"
                   value={activeTab.bearerToken}
                   onChange={(e) => updateTab(activeTab.id, { bearerToken: e.target.value })}
-                  className="bg-zinc-900 border border-border/30 rounded-md px-3 py-1.5 text-xs text-foreground focus:outline-none focus:border-primary/50"
+                  className="bg-background border border-border/30 rounded-md px-3 py-1.5 text-xs text-foreground focus:outline-none focus:border-primary/50"
                 />
               </div>
             )}
 
             {activeTab.authType === "basic" && (
-              <div className="grid grid-cols-2 gap-3 border border-border/20 p-3 rounded-lg bg-zinc-900/40">
+              <div className="grid grid-cols-2 gap-3 border border-border/20 p-3 rounded-lg bg-muted/30">
                 <div className="flex flex-col gap-1.5">
                   <label className="text-[11px] font-semibold text-muted-foreground">Username</label>
                   <input
@@ -490,7 +531,7 @@ export const RequestBuilderFeature: React.FC = () => {
                     placeholder="Username"
                     value={activeTab.basicUsername}
                     onChange={(e) => updateTab(activeTab.id, { basicUsername: e.target.value })}
-                    className="bg-zinc-900 border border-border/30 rounded-md px-3 py-1.5 text-xs text-foreground focus:outline-none"
+                    className="bg-background border border-border/30 rounded-md px-3 py-1.5 text-xs text-foreground focus:outline-none"
                   />
                 </div>
                 <div className="flex flex-col gap-1.5">
@@ -500,7 +541,7 @@ export const RequestBuilderFeature: React.FC = () => {
                     placeholder="Password"
                     value={activeTab.basicPassword}
                     onChange={(e) => updateTab(activeTab.id, { basicPassword: e.target.value })}
-                    className="bg-zinc-900 border border-border/30 rounded-md px-3 py-1.5 text-xs text-foreground focus:outline-none"
+                    className="bg-background border border-border/30 rounded-md px-3 py-1.5 text-xs text-foreground focus:outline-none"
                   />
                 </div>
               </div>
@@ -636,7 +677,7 @@ export const RequestBuilderFeature: React.FC = () => {
                   type="radio"
                   checked={activeTab.bodyType === "none"}
                   onChange={() => updateTab(activeTab.id, { bodyType: "none" })}
-                  className="text-primary w-3 h-3 bg-zinc-900 border-border/50"
+                  className="text-primary w-3 h-3 bg-background border-border/50"
                 />
                 none
               </label>
@@ -645,7 +686,7 @@ export const RequestBuilderFeature: React.FC = () => {
                   type="radio"
                   checked={activeTab.bodyType === "form-data"}
                   onChange={() => updateTab(activeTab.id, { bodyType: "form-data" })}
-                  className="text-primary w-3 h-3 bg-zinc-900 border-border/50"
+                  className="text-primary w-3 h-3 bg-background border-border/50"
                 />
                 form-data
               </label>
@@ -654,7 +695,7 @@ export const RequestBuilderFeature: React.FC = () => {
                   type="radio"
                   checked={activeTab.bodyType === "x-www-form-urlencoded"}
                   onChange={() => updateTab(activeTab.id, { bodyType: "x-www-form-urlencoded" })}
-                  className="text-primary w-3 h-3 bg-zinc-900 border-border/50"
+                  className="text-primary w-3 h-3 bg-background border-border/50"
                 />
                 x-www-form-urlencoded
               </label>
@@ -668,7 +709,7 @@ export const RequestBuilderFeature: React.FC = () => {
                         updateTab(activeTab.id, { bodyType: "json" })
                       }
                     }}
-                    className="text-primary w-3 h-3 bg-zinc-900 border-border/50"
+                    className="text-primary w-3 h-3 bg-background border-border/50"
                   />
                   raw
                 </label>
@@ -678,8 +719,8 @@ export const RequestBuilderFeature: React.FC = () => {
                     onChange={(e) => updateTab(activeTab.id, { bodyType: e.target.value as any })}
                     className="bg-transparent border-0 text-primary hover:text-primary-foreground focus:ring-0 focus:outline-none text-[11px] cursor-pointer font-semibold py-0 pl-1"
                   >
-                    <option value="json" className="bg-zinc-900">JSON</option>
-                    <option value="raw" className="bg-zinc-900">Text</option>
+                    <option value="json" className="bg-background">JSON</option>
+                    <option value="raw" className="bg-background">Text</option>
                   </select>
                 )}
               </div>
@@ -688,17 +729,9 @@ export const RequestBuilderFeature: React.FC = () => {
                   type="radio"
                   checked={activeTab.bodyType === "binary"}
                   onChange={() => updateTab(activeTab.id, { bodyType: "binary" })}
-                  className="text-primary w-3 h-3 bg-zinc-900 border-border/50"
+                  className="text-primary w-3 h-3 bg-background border-border/50"
                 />
                 binary
-              </label>
-              <label className="flex items-center gap-1.5 cursor-not-allowed text-muted-foreground font-medium opacity-50">
-                <input
-                  type="radio"
-                  disabled
-                  className="text-primary w-3 h-3 bg-zinc-900 border-border/50"
-                />
-                GraphQL
               </label>
             </div>
 
@@ -754,7 +787,7 @@ export const RequestBuilderFeature: React.FC = () => {
                             type="checkbox"
                             checked={row.active}
                             onChange={(e) => handleFormDataChange(row.id, "active", e.target.checked)}
-                            className="rounded border-border/50 text-primary w-3.5 h-3.5 bg-zinc-900 cursor-pointer"
+                            className="rounded border-border/50 text-primary w-3.5 h-3.5 bg-background cursor-pointer"
                           />
                         </td>
                         <td className="p-1 border-r border-border/30">
@@ -788,8 +821,8 @@ export const RequestBuilderFeature: React.FC = () => {
                             onChange={(e) => handleFormDataChange(row.id, "type", e.target.value)}
                             className="bg-transparent border-0 text-foreground focus:ring-0 focus:outline-none text-[11px] cursor-pointer"
                           >
-                            <option value="text" className="bg-zinc-900">Text</option>
-                            <option value="file" className="bg-zinc-900">File</option>
+                            <option value="text" className="bg-background">Text</option>
+                            <option value="file" className="bg-background">File</option>
                           </select>
                         </td>
                         <td className="p-1 text-center">
@@ -828,7 +861,7 @@ export const RequestBuilderFeature: React.FC = () => {
                             type="checkbox"
                             checked={row.active}
                             onChange={(e) => handleUrlEncodedChange(row.id, "active", e.target.checked)}
-                            className="rounded border-border/50 text-primary w-3.5 h-3.5 bg-zinc-900 cursor-pointer"
+                            className="rounded border-border/50 text-primary w-3.5 h-3.5 bg-background cursor-pointer"
                           />
                         </td>
                         <td className="p-1 border-r border-border/30">
@@ -867,7 +900,7 @@ export const RequestBuilderFeature: React.FC = () => {
             )}
 
             {activeTab.bodyType === "binary" && (
-              <div className="flex-1 flex flex-col items-center justify-center border border-border/20 border-dashed rounded-lg p-6 bg-zinc-900/10 text-center">
+              <div className="flex-1 flex flex-col items-center justify-center border border-border/20 border-dashed rounded-lg p-6 bg-muted/10 text-center">
                 <span className="text-xs text-muted-foreground font-semibold mb-2">Select a file to send in the request body</span>
                 <input
                   type="file"

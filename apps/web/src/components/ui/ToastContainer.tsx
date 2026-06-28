@@ -8,19 +8,10 @@ export const ToastContainer: React.FC = () => {
 
   const getIcon = (type: Toast["type"]) => {
     switch (type) {
-      case "success": return <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-      case "warning": return <AlertTriangle className="w-4 h-4 text-amber-500" />
-      case "error": return <XCircle className="w-4 h-4 text-rose-500" />
-      case "info": return <Info className="w-4 h-4 text-blue-500" />
-    }
-  }
-
-  const getBorderColor = (type: Toast["type"]) => {
-    switch (type) {
-      case "success": return "border-emerald-500/20 bg-emerald-500/5 text-emerald-300"
-      case "warning": return "border-amber-500/20 bg-amber-500/5 text-amber-300"
-      case "error": return "border-rose-500/20 bg-rose-500/5 text-rose-300"
-      case "info": return "border-blue-500/20 bg-blue-500/5 text-blue-300"
+      case "success": return <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+      case "warning": return <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0" />
+      case "error": return <XCircle className="w-4 h-4 text-rose-400 shrink-0" />
+      case "info": return <Info className="w-4 h-4 text-blue-400 shrink-0" />
     }
   }
 
@@ -33,13 +24,13 @@ export const ToastContainer: React.FC = () => {
             initial={{ opacity: 0, y: 15, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -10, scale: 0.95 }}
-            className={`flex items-center gap-3 p-3.5 border rounded-lg shadow-xl backdrop-blur pointer-events-auto ${getBorderColor(toast.type)}`}
+            className="flex items-center gap-3 p-3.5 bg-card border border-border text-foreground rounded-lg shadow-2xl pointer-events-auto"
           >
             {getIcon(toast.type)}
-            <span className="text-xs font-medium flex-1 leading-snug">{toast.message}</span>
+            <span className="text-xs font-semibold flex-1 leading-snug">{toast.message}</span>
             <button
               onClick={() => dismissToast(toast.id)}
-              className="p-0.5 rounded-full hover:bg-white/10 text-muted-foreground hover:text-foreground transition-all shrink-0"
+              className="p-0.5 rounded-full hover:bg-muted text-muted-foreground hover:text-foreground transition-all shrink-0 cursor-pointer"
             >
               <X className="w-3.5 h-3.5" />
             </button>

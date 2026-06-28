@@ -84,7 +84,7 @@ export const TabsBar: React.FC = () => {
                     }
                   }}
                   onClick={(e) => e.stopPropagation()}
-                  className="bg-zinc-800 border border-primary/50 rounded px-1 py-0.5 text-xs text-foreground focus:outline-none max-w-[100px] font-normal"
+                  className="bg-background border border-primary/50 rounded px-1 py-0.5 text-xs text-foreground focus:outline-none max-w-[100px] font-normal"
                 />
               ) : (
                 <span

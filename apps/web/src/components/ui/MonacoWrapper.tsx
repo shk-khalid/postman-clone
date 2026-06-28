@@ -39,7 +39,7 @@ export const MonacoWrapper: React.FC<MonacoWrapperProps> = ({
   }
 
   return (
-    <div className="w-full h-full border border-border/40 rounded-md overflow-hidden bg-zinc-950">
+    <div className="w-full h-full border border-border/40 rounded-md overflow-hidden bg-background">
       <Editor
         height={height}
         language={language}

@@ -155,7 +155,7 @@ export const CollectionsFeature: React.FC = () => {
       case "PUT": return "text-blue-500 bg-blue-500/10 border-blue-500/10"
       case "DELETE": return "text-rose-500 bg-rose-500/10 border-rose-500/10"
       case "PATCH": return "text-indigo-500 bg-indigo-500/10 border-indigo-500/10"
-      default: return "text-zinc-500 bg-zinc-500/10 border-zinc-500/10"
+      default: return "text-muted-foreground bg-muted border-border"
     }
   }
 
@@ -288,7 +288,7 @@ export const CollectionsFeature: React.FC = () => {
                         autoFocus
                         value={editName}
                         onChange={(e) => setEditName(e.target.value)}
-                        className="bg-zinc-900 border border-primary/50 rounded-md px-1.5 py-0.5 text-xs text-foreground focus:outline-none flex-1"
+                        className="bg-background border border-primary/50 rounded-md px-1.5 py-0.5 text-xs text-foreground focus:outline-none flex-1"
                       />
                       <button
                         onClick={() => handleSaveRename(col.id, false)}
@@ -371,7 +371,7 @@ export const CollectionsFeature: React.FC = () => {
                                 autoFocus
                                 value={editName}
                                 onChange={(e) => setEditName(e.target.value)}
-                                className="bg-zinc-900 border border-primary/50 rounded-md px-1.5 py-0.5 text-xs text-foreground focus:outline-none flex-1"
+                                className="bg-background border border-primary/50 rounded-md px-1.5 py-0.5 text-xs text-foreground focus:outline-none flex-1"
                               />
                               <button
                                 onClick={() => handleSaveRename(req.id, true, col.id)}
