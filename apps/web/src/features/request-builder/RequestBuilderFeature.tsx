@@ -8,6 +8,7 @@ import { MonacoWrapper } from "@/components/ui/MonacoWrapper"
 import { resolveVariables, getUrlPreview } from "@/lib/variableResolver"
 import { requestService } from "@/services/request/requestService"
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts"
+import { parseCurl } from "@/lib/curlParser"
 import { cn } from "@/lib/utils"
 
 export const RequestBuilderFeature: React.FC = () => {
@@ -64,7 +65,41 @@ export const RequestBuilderFeature: React.FC = () => {
   }
 
   const handleUrlChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    updateTab(activeTab.id, { url: e.target.value })
+    const value = e.target.value
+    const trimmed = value.trim()
+    
+    // Check if it's a cURL command
+    if (trimmed.toLowerCase().startsWith("curl ")) {
+      const parsed = parseCurl(value)
+      if (parsed) {
+        updateTab(activeTab.id, {
+          method: parsed.method,
+          url: parsed.url,
+          headers: parsed.headers,
+          body: parsed.body,
+          bodyType: parsed.bodyType,
+          isDirty: true,
+        })
+        showToast("Imported cURL", "success")
+        return
+      }
+    }
+    
+    // Check if it's a raw HTTP method + URL (e.g., "POST http://localhost:8000/api")
+    const rawMatch = trimmed.match(/^(GET|POST|PUT|DELETE|PATCH|OPTIONS|HEAD)\s+([^\s]+)$/i)
+    if (rawMatch) {
+      const method = rawMatch[1].toUpperCase() as HTTPMethod
+      const url = rawMatch[2]
+      updateTab(activeTab.id, {
+        method,
+        url,
+        isDirty: true,
+      })
+      showToast("Imported request", "success")
+      return
+    }
+
+    updateTab(activeTab.id, { url: value })
   }
 
   // Params updates

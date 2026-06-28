@@ -5,8 +5,11 @@ import { useToastStore } from "@/store/toastStore"
 import { cn } from "@/lib/utils"
 
 export const TabsBar: React.FC = () => {
-  const { tabs, activeTabId, setActiveTabId, closeTab, addTab, duplicateTab } = useTabStore()
+  const { tabs, activeTabId, setActiveTabId, closeTab, addTab, duplicateTab, updateTab } = useTabStore()
   const { showToast } = useToastStore()
+
+  const [editingTabId, setEditingTabId] = React.useState<string | null>(null)
+  const [editingName, setEditingName] = React.useState("")
 
   const handleAddNewTab = () => {
     addTab()
@@ -15,6 +18,13 @@ export const TabsBar: React.FC = () => {
   const handleDuplicateTab = (id: string, name: string) => {
     duplicateTab(id)
     showToast(`Duplicated tab "${name}"`, "success")
+  }
+
+  const handleSaveRename = (id: string) => {
+    if (editingName.trim()) {
+      updateTab(id, { name: editingName.trim() })
+    }
+    setEditingTabId(null)
   }
 
   const getMethodColorClass = (method: string) => {
@@ -34,6 +44,7 @@ export const TabsBar: React.FC = () => {
       <div className="flex items-center h-full">
         {tabs.map((tab) => {
           const isActive = tab.id === activeTabId
+          const isEditing = editingTabId === tab.id
 
           return (
             <div
@@ -52,7 +63,43 @@ export const TabsBar: React.FC = () => {
               </span>
 
               {/* Title */}
-              <span className="truncate max-w-[100px]">{tab.name}</span>
+              {isEditing ? (
+                <input
+                  type="text"
+                  autoFocus
+                  value={editingName}
+                  onChange={(e) => setEditingName(e.target.value)}
+                  onBlur={() => handleSaveRename(tab.id)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      handleSaveRename(tab.id)
+                    } else if (e.key === "Escape") {
+                      setEditingTabId(null)
+                    }
+                  }}
+                  onClick={(e) => e.stopPropagation()}
+                  className="bg-zinc-800 border border-primary/50 rounded px-1 py-0.5 text-xs text-foreground focus:outline-none max-w-[100px] font-normal"
+                />
+              ) : (
+                <span
+                  onClick={(e) => {
+                    if (isActive) {
+                      e.stopPropagation()
+                      setEditingTabId(tab.id)
+                      setEditingName(tab.name)
+                    }
+                  }}
+                  onDoubleClick={(e) => {
+                    e.stopPropagation()
+                    setEditingTabId(tab.id)
+                    setEditingName(tab.name)
+                  }}
+                  className="truncate max-w-[100px]"
+                  title="Click to rename"
+                >
+                  {tab.name}
+                </span>
+              )}
 
               {/* Dirty indicator */}
               {tab.isDirty && (
