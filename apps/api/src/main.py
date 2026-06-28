@@ -23,9 +23,18 @@ from src.models.settings import Settings  # noqa: F401
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 
+from contextlib import asynccontextmanager
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Create tables automatically on application startup
+    Base.metadata.create_all(bind=engine)
+    yield
+
 app = FastAPI(
     title=settings.APP_NAME,
     debug=settings.DEBUG,
+    lifespan=lifespan,
 )
 
 # Register CORS middleware
