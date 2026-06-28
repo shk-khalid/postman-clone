@@ -57,10 +57,16 @@ export const TabsBar: React.FC = () => {
                   : "text-muted-foreground hover:bg-white/2 hover:text-foreground"
               )}
             >
-              {/* Method Label */}
-              <span className={cn("font-bold text-[9px] font-mono shrink-0", getMethodColorClass(tab.method))}>
-                {tab.method}
-              </span>
+              {/* Method / Type Label */}
+              {tab.type === "environment" ? (
+                <span className="font-bold text-[8px] bg-primary/15 text-primary px-1 py-0.5 rounded font-mono shrink-0">
+                  ENV
+                </span>
+              ) : (
+                <span className={cn("font-bold text-[9px] font-mono shrink-0", getMethodColorClass(tab.method))}>
+                  {tab.method}
+                </span>
+              )}
 
               {/* Title */}
               {isEditing ? (

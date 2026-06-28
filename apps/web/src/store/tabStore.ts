@@ -46,6 +46,7 @@ export interface ResponseData {
 export interface Tab {
   id: string
   name: string
+  type?: "request" | "environment"
   method: HTTPMethod
   url: string
   headers: RequestHeader[]

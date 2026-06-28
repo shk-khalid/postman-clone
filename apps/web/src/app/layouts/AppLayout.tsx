@@ -5,6 +5,7 @@ import { useTabStore } from "@/store/tabStore"
 import { useSettingsStore } from "@/store/settingsStore"
 import { CollectionsFeature } from "@/features/collections/CollectionsFeature"
 import { EnvironmentsFeature } from "@/features/environments/EnvironmentsFeature"
+import { EnvironmentEditor } from "@/features/environments/EnvironmentEditor"
 import { HistoryFeature } from "@/features/history/HistoryFeature"
 import { SettingsFeature } from "@/features/settings/SettingsFeature"
 import { RequestBuilderFeature } from "@/features/request-builder/RequestBuilderFeature"
@@ -203,14 +204,18 @@ export const AppLayout: React.FC = () => {
 
           <div className="flex-1 overflow-hidden">
             {tabs.length > 0 && activeTabId ? (
-              <SplitPane
-                direction="vertical"
-                minSize={120}
-                defaultSize={260}
-                firstPane={<RequestBuilderFeature />}
-                secondPane={<ResponseViewerFeature />}
-                className="bg-muted/10"
-              />
+              tabs.find(t => t.id === activeTabId)?.type === "environment" ? (
+                <EnvironmentEditor envId={activeTabId} />
+              ) : (
+                <SplitPane
+                  direction="vertical"
+                  minSize={120}
+                  defaultSize={260}
+                  firstPane={<RequestBuilderFeature />}
+                  secondPane={<ResponseViewerFeature />}
+                  className="bg-muted/10"
+                />
+              )
             ) : (
               <div className="h-full flex items-center justify-center p-8 bg-background">
                 <EmptyState
