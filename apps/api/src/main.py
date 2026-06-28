@@ -20,9 +20,20 @@ from src.models.collection import Collection  # noqa: F401
 from src.models.request import SavedRequest  # noqa: F401
 from src.models.settings import Settings  # noqa: F401
 
+from fastapi.middleware.cors import CORSMiddleware
+
 app = FastAPI(
     title=settings.APP_NAME,
     debug=settings.DEBUG,
+)
+
+# Register CORS middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=settings.cors_origins_list,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 # Register logging middleware
