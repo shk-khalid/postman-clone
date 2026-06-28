@@ -1,5 +1,4 @@
 from fastapi import APIRouter, Depends, status
-from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 from pydantic import BaseModel, Field
 
@@ -10,7 +9,8 @@ from src.schemas.collection import (
     CreateCollection, UpdateCollection, CollectionResponse,
     CreateSavedRequest, UpdateSavedRequest, SavedRequestResponse
 )
-from src.services.collection_service import CollectionService, CollectionServiceError
+from src.schemas.response import StandardResponse
+from src.services.collection_service import CollectionService
 
 
 router = APIRouter(
@@ -31,85 +31,111 @@ def get_collection_service(db: Session = Depends(get_db)) -> CollectionService:
 
 # --- Collections CRUD ---
 
-@router.get("/collections", response_model=list[CollectionResponse])
+@router.get("/collections", response_model=StandardResponse[list[CollectionResponse]])
 def list_collections(service: CollectionService = Depends(get_collection_service)):
-    return service.list_collections()
+    data = service.list_collections()
+    return StandardResponse(
+        success=True,
+        message="Collections retrieved successfully.",
+        data=data
+    )
 
 
-@router.get("/collections/{id}", response_model=CollectionResponse)
+@router.get("/collections/{id}", response_model=StandardResponse[CollectionResponse])
 def get_collection(id: int, service: CollectionService = Depends(get_collection_service)):
-    try:
-        return service.get_collection(id)
-    except CollectionServiceError as e:
-        return JSONResponse(status_code=e.status_code, content={"detail": e.message})
+    data = service.get_collection(id)
+    return StandardResponse(
+        success=True,
+        message="Collection retrieved successfully.",
+        data=data
+    )
 
 
-@router.post("/collections", response_model=CollectionResponse, status_code=status.HTTP_201_CREATED)
+@router.post("/collections", response_model=StandardResponse[CollectionResponse], status_code=status.HTTP_201_CREATED)
 def create_collection(payload: CreateCollection, service: CollectionService = Depends(get_collection_service)):
-    return service.create_collection(payload)
+    data = service.create_collection(payload)
+    return StandardResponse(
+        success=True,
+        message="Collection created successfully.",
+        data=data
+    )
 
 
-@router.patch("/collections/{id}", response_model=CollectionResponse)
+@router.patch("/collections/{id}", response_model=StandardResponse[CollectionResponse])
 def update_collection(id: int, payload: UpdateCollection, service: CollectionService = Depends(get_collection_service)):
-    try:
-        return service.update_collection(id, payload)
-    except CollectionServiceError as e:
-        return JSONResponse(status_code=e.status_code, content={"detail": e.message})
+    data = service.update_collection(id, payload)
+    return StandardResponse(
+        success=True,
+        message="Collection updated successfully.",
+        data=data
+    )
 
 
-@router.delete("/collections/{id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/collections/{id}", response_model=StandardResponse[None], status_code=status.HTTP_200_OK)
 def delete_collection(id: int, service: CollectionService = Depends(get_collection_service)):
-    try:
-        service.delete_collection(id)
-    except CollectionServiceError as e:
-        return JSONResponse(status_code=e.status_code, content={"detail": e.message})
+    service.delete_collection(id)
+    return StandardResponse(
+        success=True,
+        message="Collection deleted successfully."
+    )
 
 
 # --- Saved Requests CRUD ---
 
-@router.post("/collections/{id}/requests", response_model=SavedRequestResponse, status_code=status.HTTP_201_CREATED)
+@router.post("/collections/{id}/requests", response_model=StandardResponse[SavedRequestResponse], status_code=status.HTTP_201_CREATED)
 def save_request(id: int, payload: CreateSavedRequest, service: CollectionService = Depends(get_collection_service)):
-    try:
-        return service.save_request(id, payload)
-    except CollectionServiceError as e:
-        return JSONResponse(status_code=e.status_code, content={"detail": e.message})
+    data = service.save_request(id, payload)
+    return StandardResponse(
+        success=True,
+        message="Saved request added to collection successfully.",
+        data=data
+    )
 
 
-@router.get("/requests/{id}", response_model=SavedRequestResponse)
+@router.get("/requests/{id}", response_model=StandardResponse[SavedRequestResponse])
 def get_request(id: int, service: CollectionService = Depends(get_collection_service)):
-    try:
-        return service.get_request(id)
-    except CollectionServiceError as e:
-        return JSONResponse(status_code=e.status_code, content={"detail": e.message})
+    data = service.get_request(id)
+    return StandardResponse(
+        success=True,
+        message="Saved request retrieved successfully.",
+        data=data
+    )
 
 
-@router.patch("/requests/{id}", response_model=SavedRequestResponse)
+@router.patch("/requests/{id}", response_model=StandardResponse[SavedRequestResponse])
 def update_request(id: int, payload: UpdateSavedRequest, service: CollectionService = Depends(get_collection_service)):
-    try:
-        return service.update_request(id, payload)
-    except CollectionServiceError as e:
-        return JSONResponse(status_code=e.status_code, content={"detail": e.message})
+    data = service.update_request(id, payload)
+    return StandardResponse(
+        success=True,
+        message="Saved request updated successfully.",
+        data=data
+    )
 
 
-@router.delete("/requests/{id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/requests/{id}", response_model=StandardResponse[None], status_code=status.HTTP_200_OK)
 def delete_request(id: int, service: CollectionService = Depends(get_collection_service)):
-    try:
-        service.delete_request(id)
-    except CollectionServiceError as e:
-        return JSONResponse(status_code=e.status_code, content={"detail": e.message})
+    service.delete_request(id)
+    return StandardResponse(
+        success=True,
+        message="Saved request deleted successfully."
+    )
 
 
-@router.patch("/requests/{id}/move", response_model=SavedRequestResponse)
+@router.patch("/requests/{id}/move", response_model=StandardResponse[SavedRequestResponse])
 def move_request(id: int, payload: MoveRequestPayload, service: CollectionService = Depends(get_collection_service)):
-    try:
-        return service.move_request(id, payload.new_collection_id)
-    except CollectionServiceError as e:
-        return JSONResponse(status_code=e.status_code, content={"detail": e.message})
+    data = service.move_request(id, payload.new_collection_id)
+    return StandardResponse(
+        success=True,
+        message="Saved request moved successfully.",
+        data=data
+    )
 
 
-@router.patch("/requests/{id}/duplicate", response_model=SavedRequestResponse, status_code=status.HTTP_201_CREATED)
+@router.patch("/requests/{id}/duplicate", response_model=StandardResponse[SavedRequestResponse], status_code=status.HTTP_201_CREATED)
 def duplicate_request(id: int, service: CollectionService = Depends(get_collection_service)):
-    try:
-        return service.duplicate_request(id)
-    except CollectionServiceError as e:
-        return JSONResponse(status_code=e.status_code, content={"detail": e.message})
+    data = service.duplicate_request(id)
+    return StandardResponse(
+        success=True,
+        message="Saved request duplicated successfully.",
+        data=data
+    )

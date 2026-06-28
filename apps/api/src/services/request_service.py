@@ -6,6 +6,7 @@ import httpx
 from src.models.history import History
 from src.repositories.history import HistoryRepository
 from src.repositories.environment import EnvironmentRepository
+from src.services.settings_service import SettingsService
 from src.schemas.request import RequestPayload, ResponsePayload
 
 
@@ -23,9 +24,15 @@ class RequestService:
     executing outbound HTTP requests, calculating metrics, and storing history.
     """
 
-    def __init__(self, history_repo: HistoryRepository, environment_repo: EnvironmentRepository | None = None):
+    def __init__(
+        self,
+        history_repo: HistoryRepository,
+        environment_repo: EnvironmentRepository | None = None,
+        settings_service: SettingsService | None = None
+    ):
         self.history_repo = history_repo
         self.environment_repo = environment_repo
+        self.settings_service = settings_service
 
     def _resolve(self, val: Any, variables: list) -> Any:
         """
@@ -96,7 +103,7 @@ class RequestService:
     async def send_request(self, payload: RequestPayload) -> ResponsePayload:
         """
         Executes the outbound HTTP request, calculates metrics, saves history,
-        and returns the response payload. Resolves variables beforehand.
+        and returns the response payload. Resolves variables and applies settings.
         """
         # Load environment and resolve variables if environment_id is provided
         variables = []
@@ -117,6 +124,20 @@ class RequestService:
             if payload.auth:
                 payload.auth = self._resolve(payload.auth, variables)
 
+        # Default fallback values for configuration settings
+        follow_redirects = True
+        verify_ssl = True
+        timeout_val = 10.0
+        max_size_limit = 10485760
+
+        # Override defaults using SettingsService values
+        if self.settings_service:
+            settings_obj = self.settings_service.get_settings()
+            follow_redirects = settings_obj.follow_redirects
+            verify_ssl = settings_obj.verify_ssl
+            timeout_val = settings_obj.default_timeout
+            max_size_limit = settings_obj.max_response_size
+
         try:
             url, headers, auth = self._prepare_request(payload)
         except RequestServiceError as e:
@@ -136,7 +157,7 @@ class RequestService:
         start_time = time.perf_counter()
         
         try:
-            async with httpx.AsyncClient(timeout=10.0, follow_redirects=True) as client:
+            async with httpx.AsyncClient(timeout=timeout_val, verify=verify_ssl, follow_redirects=follow_redirects) as client:
                 response = await client.request(
                     method=payload.method,
                     url=url,
@@ -147,6 +168,10 @@ class RequestService:
             
             duration = time.perf_counter() - start_time
             response_size = len(response.content)
+
+            # Check response size limits
+            if response_size > max_size_limit:
+                raise RequestServiceError(f"Response size ({response_size} bytes) exceeds configured limit of {max_size_limit} bytes", status_code=413)
             
             # Normalize response body (decode to text)
             try:
@@ -208,6 +233,11 @@ class RequestService:
             duration = time.perf_counter() - start_time
             self._save_history_fail(payload, f"Request Error: {str(e)}", duration, request_snapshot)
             raise RequestServiceError(f"Outbound request failed: {str(e)}", status_code=400)
+
+        except RequestServiceError as e:
+            duration = time.perf_counter() - start_time
+            self._save_history_fail(payload, e.message, duration, request_snapshot)
+            raise e
 
         except Exception as e:
             duration = time.perf_counter() - start_time
