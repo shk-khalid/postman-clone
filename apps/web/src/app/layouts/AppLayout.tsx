@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react"
-import { Folder, Shield, History, Settings, Sparkles, Plus, ChevronLeft, ChevronRight } from "lucide-react"
+import { Folder, Shield, History, Settings, Sparkles, Plus, ChevronLeft, ChevronRight, Users, Server, BookOpen, Activity } from "lucide-react"
 import { useWorkspaceStore } from "@/store/workspaceStore"
 import { useTabStore } from "@/store/tabStore"
 import { useSettingsStore } from "@/store/settingsStore"
@@ -29,6 +29,7 @@ export const AppLayout: React.FC = () => {
   // Settings store parameters
   const { sidebarWidth, sidebarCollapsed, updateSettings } = useSettingsStore()
   const isResizingSidebar = useRef(false)
+  const [showUserDropdown, setShowUserDropdown] = useState(false)
 
   // Fetch initial workspace data from API backend on mount
   useEffect(() => {
@@ -57,6 +58,10 @@ export const AppLayout: React.FC = () => {
     { id: "collections", label: "Collections", icon: Folder },
     { id: "environments", label: "Environments", icon: Shield },
     { id: "history", label: "History", icon: History },
+    { id: "workspaces", label: "Team Workspaces", icon: Users },
+    { id: "mocks", label: "Mock Servers", icon: Server },
+    { id: "docs", label: "API Documentation", icon: BookOpen },
+    { id: "monitors", label: "Monitors", icon: Activity },
     { id: "settings", label: "Settings", icon: Settings },
   ] as const
 
@@ -117,6 +122,90 @@ export const AppLayout: React.FC = () => {
         return <HistoryFeature />
       case "settings":
         return <SettingsFeature />
+      case "workspaces":
+        return (
+          <div className="flex flex-col h-full bg-card border-r border-border p-5 select-none space-y-4">
+            <div className="flex items-center gap-2 border-b border-border pb-3">
+              <Users className="w-4 h-4 text-primary" />
+              <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Workspaces</span>
+            </div>
+            <div className="flex-1 flex flex-col items-center justify-center text-center p-4">
+              <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary mb-3">
+                <Users className="w-5 h-5" />
+              </div>
+              <h4 className="text-xs font-bold text-foreground">Sharing & Collaboration</h4>
+              <p className="text-[10px] text-muted-foreground mt-1 max-w-[180px]">
+                Create shared workspaces, collaborate in real-time, and manage organization team permissions.
+              </p>
+              <span className="mt-4 px-2 py-0.5 bg-primary/10 text-primary text-[9px] font-semibold rounded-full uppercase tracking-wider">
+                Coming Soon
+              </span>
+            </div>
+          </div>
+        )
+      case "mocks":
+        return (
+          <div className="flex flex-col h-full bg-card border-r border-border p-5 select-none space-y-4">
+            <div className="flex items-center gap-2 border-b border-border pb-3">
+              <Server className="w-4 h-4 text-primary" />
+              <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Mock Servers</span>
+            </div>
+            <div className="flex-1 flex flex-col items-center justify-center text-center p-4">
+              <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary mb-3">
+                <Server className="w-5 h-5" />
+              </div>
+              <h4 className="text-xs font-bold text-foreground">Mock Endpoints</h4>
+              <p className="text-[10px] text-muted-foreground mt-1 max-w-[180px]">
+                Simulate API backend endpoints, returns static payloads, and test mock responses locally.
+              </p>
+              <span className="mt-4 px-2 py-0.5 bg-primary/10 text-primary text-[9px] font-semibold rounded-full uppercase tracking-wider">
+                Coming Soon
+              </span>
+            </div>
+          </div>
+        )
+      case "docs":
+        return (
+          <div className="flex flex-col h-full bg-card border-r border-border p-5 select-none space-y-4">
+            <div className="flex items-center gap-2 border-b border-border pb-3">
+              <BookOpen className="w-4 h-4 text-primary" />
+              <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">API Docs</span>
+            </div>
+            <div className="flex-1 flex flex-col items-center justify-center text-center p-4">
+              <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary mb-3">
+                <BookOpen className="w-5 h-5" />
+              </div>
+              <h4 className="text-xs font-bold text-foreground">Documentation Generator</h4>
+              <p className="text-[10px] text-muted-foreground mt-1 max-w-[180px]">
+                Instantly compile HTML reference documents and schema details from your collections automatically.
+              </p>
+              <span className="mt-4 px-2 py-0.5 bg-primary/10 text-primary text-[9px] font-semibold rounded-full uppercase tracking-wider">
+                Coming Soon
+              </span>
+            </div>
+          </div>
+        )
+      case "monitors":
+        return (
+          <div className="flex flex-col h-full bg-card border-r border-border p-5 select-none space-y-4">
+            <div className="flex items-center gap-2 border-b border-border pb-3">
+              <Activity className="w-4 h-4 text-primary" />
+              <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Monitors</span>
+            </div>
+            <div className="flex-1 flex flex-col items-center justify-center text-center p-4">
+              <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary mb-3">
+                <Activity className="w-5 h-5" />
+              </div>
+              <h4 className="text-xs font-bold text-foreground">Scheduled Runs</h4>
+              <p className="text-[10px] text-muted-foreground mt-1 max-w-[180px]">
+                Run automated testing checks, monitor backend uptime, and trigger webhook reports on regular schedules.
+              </p>
+              <span className="mt-4 px-2 py-0.5 bg-primary/10 text-primary text-[9px] font-semibold rounded-full uppercase tracking-wider">
+                Coming Soon
+              </span>
+            </div>
+          </div>
+        )
       default:
         return <CollectionsFeature />
     }
@@ -169,14 +258,41 @@ export const AppLayout: React.FC = () => {
           </nav>
         </div>
 
-        {/* Sidebar Collapse Toggle Icon */}
-        <button
-          onClick={toggleCollapse}
-          className="w-8 h-8 flex items-center justify-center rounded-lg text-muted-foreground hover:bg-white/5 hover:text-foreground transition-all focus:outline-none"
-          title={sidebarCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
-        >
-          {sidebarCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
-        </button>
+        {/* Sidebar Collapse & User Account Toggle */}
+        <div className="flex flex-col items-center gap-4 w-full relative">
+          {/* User Account Trigger */}
+          <div className="relative">
+            <button
+              onClick={() => setShowUserDropdown(!showUserDropdown)}
+              className="w-8 h-8 rounded-full bg-primary/20 border border-primary/30 flex items-center justify-center text-xs font-bold text-primary cursor-pointer hover:scale-105 transition-transform"
+              title="User Profile"
+            >
+              JD
+            </button>
+
+            {showUserDropdown && (
+              <>
+                <div className="fixed inset-0 z-40" onClick={() => setShowUserDropdown(false)} />
+                <div className="absolute bottom-10 left-4 w-52 bg-card border border-border rounded-lg shadow-xl p-3.5 z-50 text-xs text-foreground space-y-2">
+                  <div className="font-bold text-foreground leading-none">John Doe</div>
+                  <div className="text-[10px] text-muted-foreground">john.doe@example.com</div>
+                  <div className="border-t border-border/30 pt-2 flex items-center justify-between">
+                    <span className="text-[9px] bg-primary/10 text-primary px-1.5 py-0.5 rounded font-semibold">Active User</span>
+                    <span className="text-[8px] text-muted-foreground italic">Auth coming soon</span>
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+
+          <button
+            onClick={toggleCollapse}
+            className="w-8 h-8 flex items-center justify-center rounded-lg text-muted-foreground hover:bg-white/5 hover:text-foreground transition-all focus:outline-none"
+            title={sidebarCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
+          >
+            {sidebarCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
+          </button>
+        </div>
       </div>
 
       {/* 2. Side drawer Details Pane */}

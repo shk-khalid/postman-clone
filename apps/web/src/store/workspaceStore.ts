@@ -1,7 +1,7 @@
 import { create } from "zustand"
 import { environmentApi } from "@/services/api/environmentApi"
 
-export type SidebarFeature = "collections" | "environments" | "history" | "settings"
+export type SidebarFeature = "collections" | "environments" | "history" | "settings" | "workspaces" | "mocks" | "docs" | "monitors"
 
 export interface EnvVar {
   id: string
