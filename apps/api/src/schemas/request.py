@@ -12,6 +12,7 @@ class RequestPayload(BaseModel):
     params: Dict[str, str] | None = Field(default=None, description="Query parameters to append to the URL")
     body: str | None = Field(default=None, description="Raw request body payload")
     auth: Dict[str, str] | None = Field(default=None, description="Authentication credentials (e.g. username/password)")
+    environment_id: int | None = Field(default=None, description="Optional Environment ID for variable resolution")
 
 
 class ResponsePayload(BaseModel):

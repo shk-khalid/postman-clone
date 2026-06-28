@@ -14,6 +14,9 @@ router = APIRouter(
 )
 
 
+from src.repositories.environment import EnvironmentRepository
+
+
 @router.post(
     "/send",
     response_model=ResponsePayload,
@@ -30,7 +33,8 @@ async def send_request(
     and invoking RequestService.
     """
     history_repo = HistoryRepository(db)
-    request_service = RequestService(history_repo)
+    environment_repo = EnvironmentRepository(db)
+    request_service = RequestService(history_repo, environment_repo)
     
     try:
         response = await request_service.send_request(payload)

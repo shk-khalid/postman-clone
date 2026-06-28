@@ -5,6 +5,7 @@ import httpx
 
 from src.models.history import History
 from src.repositories.history import HistoryRepository
+from src.repositories.environment import EnvironmentRepository
 from src.schemas.request import RequestPayload, ResponsePayload
 
 
@@ -22,8 +23,24 @@ class RequestService:
     executing outbound HTTP requests, calculating metrics, and storing history.
     """
 
-    def __init__(self, history_repo: HistoryRepository):
+    def __init__(self, history_repo: HistoryRepository, environment_repo: EnvironmentRepository | None = None):
         self.history_repo = history_repo
+        self.environment_repo = environment_repo
+
+    def _resolve(self, val: Any, variables: list) -> Any:
+        """
+        Recursively resolves {{key}} variable placeholders with variable values.
+        """
+        if isinstance(val, str):
+            for var in variables:
+                placeholder = f"{{{{{var.key}}}}}"
+                val = val.replace(placeholder, var.value)
+            return val
+        elif isinstance(val, dict):
+            return {self._resolve(k, variables): self._resolve(v, variables) for k, v in val.items()}
+        elif isinstance(val, list):
+            return [self._resolve(item, variables) for item in val]
+        return val
 
     def _prepare_request(self, payload: RequestPayload) -> tuple[str, dict[str, str], tuple[str, str] | None]:
         """
@@ -79,12 +96,30 @@ class RequestService:
     async def send_request(self, payload: RequestPayload) -> ResponsePayload:
         """
         Executes the outbound HTTP request, calculates metrics, saves history,
-        and returns the response payload.
+        and returns the response payload. Resolves variables beforehand.
         """
+        # Load environment and resolve variables if environment_id is provided
+        variables = []
+        if payload.environment_id and self.environment_repo:
+            env = self.environment_repo.get(payload.environment_id)
+            if env:
+                variables = env.variables
+
+        # Resolve variable placeholders in payload parameters before execution
+        if variables:
+            payload.url = self._resolve(payload.url, variables)
+            if payload.headers:
+                payload.headers = self._resolve(payload.headers, variables)
+            if payload.params:
+                payload.params = self._resolve(payload.params, variables)
+            if payload.body:
+                payload.body = self._resolve(payload.body, variables)
+            if payload.auth:
+                payload.auth = self._resolve(payload.auth, variables)
+
         try:
             url, headers, auth = self._prepare_request(payload)
         except RequestServiceError as e:
-            # Store failed attempt with minimal details
             self._save_history_fail(payload, str(e))
             raise e
 
@@ -208,5 +243,4 @@ class RequestService:
             )
             self.history_repo.save(history)
         except Exception:
-            # Fallback/ignore if database write itself fails
             pass
