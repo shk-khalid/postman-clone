@@ -10,6 +10,7 @@ import { requestService } from "@/services/request/requestService"
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts"
 import { parseCurl } from "@/lib/curlParser"
 import { cn } from "@/lib/utils"
+import { Checkbox } from "@/components/ui/Checkbox"
 
 export const RequestBuilderFeature: React.FC = () => {
   const { activeTabId, tabs, updateTab, addTab, closeTab } = useTabStore()
@@ -783,11 +784,9 @@ export const RequestBuilderFeature: React.FC = () => {
                     {(activeTab.formData || []).map((row) => (
                       <tr key={row.id} className="border-b border-border/20 hover:bg-white/2">
                         <td className="p-1 text-center">
-                          <input
-                            type="checkbox"
+                          <Checkbox
                             checked={row.active}
-                            onChange={(e) => handleFormDataChange(row.id, "active", e.target.checked)}
-                            className="rounded border-border/50 text-primary w-3.5 h-3.5 bg-background cursor-pointer"
+                            onChange={(checked) => handleFormDataChange(row.id, "active", checked)}
                           />
                         </td>
                         <td className="p-1 border-r border-border/30">
@@ -857,11 +856,9 @@ export const RequestBuilderFeature: React.FC = () => {
                     {(activeTab.urlEncoded || []).map((row) => (
                       <tr key={row.id} className="border-b border-border/20 hover:bg-white/2">
                         <td className="p-1 text-center">
-                          <input
-                            type="checkbox"
+                          <Checkbox
                             checked={row.active}
-                            onChange={(e) => handleUrlEncodedChange(row.id, "active", e.target.checked)}
-                            className="rounded border-border/50 text-primary w-3.5 h-3.5 bg-background cursor-pointer"
+                            onChange={(checked) => handleUrlEncodedChange(row.id, "active", checked)}
                           />
                         </td>
                         <td className="p-1 border-r border-border/30">

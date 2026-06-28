@@ -4,6 +4,7 @@ import { useSettingsStore } from "@/store/settingsStore"
 import { useWorkspaceStore } from "@/store/workspaceStore"
 import { useToastStore } from "@/store/toastStore"
 import { cn } from "@/lib/utils"
+import { Checkbox } from "@/components/ui/Checkbox"
 
 export const SettingsFeature: React.FC = () => {
   const { theme, fontSize, wordWrap, updateSettings } = useSettingsStore()
@@ -89,11 +90,13 @@ export const SettingsFeature: React.FC = () => {
 
           <div className="flex items-center justify-between">
             <span className="text-[11px] text-muted-foreground">Word Wrap</span>
-            <input
-              type="checkbox"
+            <Checkbox
               checked={wordWrap === "on"}
-              onChange={handleWordWrapChange}
-              className="rounded border border-border text-primary w-3.5 h-3.5 bg-background cursor-pointer"
+              onChange={(checked) => {
+                const wrap = checked ? "on" : "off"
+                updateSettings({ wordWrap: wrap })
+                showToast(`Editor word wrap set to ${wrap}`, "info")
+              }}
             />
           </div>
         </div>
@@ -104,21 +107,17 @@ export const SettingsFeature: React.FC = () => {
 
           <div className="flex items-center justify-between">
             <span className="text-[11px] text-muted-foreground">SSL Verification</span>
-            <input
-              type="checkbox"
+            <Checkbox
               checked={useSettingsStore().verify_ssl}
-              onChange={(e) => updateSettings({ verify_ssl: e.target.checked })}
-              className="rounded border border-border text-primary w-3.5 h-3.5 bg-background cursor-pointer"
+              onChange={(checked) => updateSettings({ verify_ssl: checked })}
             />
           </div>
 
           <div className="flex items-center justify-between">
             <span className="text-[11px] text-muted-foreground">Follow Redirects</span>
-            <input
-              type="checkbox"
+            <Checkbox
               checked={useSettingsStore().follow_redirects}
-              onChange={(e) => updateSettings({ follow_redirects: e.target.checked })}
-              className="rounded border border-border text-primary w-3.5 h-3.5 bg-background cursor-pointer"
+              onChange={(checked) => updateSettings({ follow_redirects: checked })}
             />
           </div>
 

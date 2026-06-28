@@ -2,6 +2,7 @@ import React from "react"
 import { ShieldCheck, Trash2 } from "lucide-react"
 import { useWorkspaceStore, EnvVar } from "@/store/workspaceStore"
 import { useToastStore } from "@/store/toastStore"
+import { Checkbox } from "@/components/ui/Checkbox"
 
 interface EnvironmentEditorProps {
   envId: string
@@ -71,12 +72,10 @@ export const EnvironmentEditor: React.FC<EnvironmentEditorProps> = ({ envId }) =
             <tbody>
               {activeEnv.variables.map((item) => (
                 <tr key={item.id} className="border-b border-border/20 hover:bg-muted/10 transition-colors">
-                  <td className="p-2 text-center">
-                    <input
-                      type="checkbox"
+                  <td className="p-2 flex justify-center items-center h-full min-h-[36px]">
+                    <Checkbox
                       checked={item.enabled}
-                      onChange={(e) => handleVarChange(item.id, "enabled", e.target.checked)}
-                      className="rounded border border-border text-primary w-3.5 h-3.5 bg-background cursor-pointer"
+                      onChange={(checked) => handleVarChange(item.id, "enabled", checked)}
                     />
                   </td>
                   <td className="p-2 border-r border-border">

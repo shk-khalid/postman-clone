@@ -1,7 +1,7 @@
 import axios from "axios"
 
 // Base URL for the FastAPI backend API
-const BASE_URL = (import.meta.env.VITE_API_URL as string)
+const BASE_URL = (process.env.NEXT_PUBLIC_API_URL || process.env.VITE_API_URL || "http://localhost:8000/") as string
 
 export const apiClient = axios.create({
   baseURL: BASE_URL,
