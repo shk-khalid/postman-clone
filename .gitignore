@@ -26,10 +26,9 @@ apps/web/lerna-debug.log*
 apps/web/.eslintcache
 apps/web/.tsbuildinfo
 
-# Python / FastAPI (API Backend)
-apps/api/__pycache__/
-apps/api/*.py[cod]
-apps/api/*$py.class
+apps/api/**/__pycache__/
+apps/api/**/*.py[cod]
+apps/api/**/*$py.class
 apps/api/.Python
 apps/api/build/
 apps/api/develop-eggs/
