@@ -215,7 +215,7 @@ export const CollectionsFeature: React.FC = () => {
   )
 
   return (
-    <div className="flex flex-col h-full bg-zinc-950/60 border-r border-border/40 select-none">
+    <div className="flex flex-col h-full bg-card border-r border-border select-none">
       {/* Header controls */}
       <div className="p-3 border-b border-border/45 flex flex-col gap-2">
         <div className="flex items-center justify-between">
@@ -237,7 +237,7 @@ export const CollectionsFeature: React.FC = () => {
               placeholder="Collection name..."
               value={newColName}
               onChange={(e) => setNewColName(e.target.value)}
-              className="flex-1 bg-zinc-900 border border-border/30 rounded-md px-2 py-1 text-xs text-foreground focus:outline-none focus:border-primary/50"
+              className="flex-1 bg-muted/40 border border-border rounded-md px-2 py-1 text-xs text-foreground focus:outline-none focus:border-primary/50"
             />
             <button
               type="submit"
@@ -262,20 +262,20 @@ export const CollectionsFeature: React.FC = () => {
             placeholder="Filter collections..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full bg-zinc-900 border border-border/30 rounded-md py-1.5 pl-8 pr-3 text-xs text-foreground placeholder-muted-foreground focus:outline-none focus:border-primary/50 transition-colors"
+            className="w-full bg-muted/40 border border-border rounded-md py-1.5 pl-8 pr-3 text-xs text-foreground placeholder-muted-foreground focus:outline-none focus:border-primary/50 transition-colors"
           />
         </div>
       </div>
 
       {/* Move requests modal interface */}
       {movingRequestId && (
-        <div className="p-3 bg-zinc-900/90 border-b border-border/30 flex flex-col gap-2">
+        <div className="p-3 bg-muted/10 border-b border-border flex flex-col gap-2">
           <span className="text-[10px] text-muted-foreground font-bold">Move request to:</span>
           <div className="flex gap-1">
             <select
               onChange={(e) => handleMoveRequest(e.target.value)}
               defaultValue=""
-              className="flex-1 bg-zinc-950 border border-border/30 rounded text-xs p-1 text-foreground focus:outline-none"
+              className="flex-1 bg-background border border-border rounded text-xs p-1 text-foreground focus:outline-none"
             >
               <option value="" disabled>Select collection...</option>
               {collections.filter(c => c.id !== sourceCollectionId).map((c) => (

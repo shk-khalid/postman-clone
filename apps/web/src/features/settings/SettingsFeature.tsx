@@ -34,8 +34,8 @@ export const SettingsFeature: React.FC = () => {
   ] as const
 
   return (
-    <div className="flex flex-col h-full bg-zinc-950/60 border-r border-border/40 p-4 select-none space-y-4">
-      <div className="flex items-center gap-2 border-b border-border/40 pb-3">
+    <div className="flex flex-col h-full bg-card border-r border-border p-4 select-none space-y-4">
+      <div className="flex items-center gap-2 border-b border-border pb-3">
         <Settings className="w-4 h-4 text-primary" />
         <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Settings</span>
       </div>
@@ -43,8 +43,8 @@ export const SettingsFeature: React.FC = () => {
       <div className="space-y-4 flex-1 overflow-y-auto pr-1">
         {/* Theme Settings Selector */}
         <div className="space-y-2">
-          <label className="text-xs font-medium text-foreground">Theme Mode</label>
-          <div className="grid grid-cols-3 gap-2">
+          <label className="text-xs font-semibold text-foreground">Theme Mode</label>
+          <div className="flex bg-muted p-0.5 rounded-lg border border-border">
             {themeOptions.map((opt) => {
               const Icon = opt.icon
               const isSelected = theme === opt.value
@@ -54,13 +54,13 @@ export const SettingsFeature: React.FC = () => {
                   key={opt.value}
                   onClick={() => handleThemeChange(opt.value)}
                   className={cn(
-                    "flex flex-col items-center justify-center gap-1.5 p-2.5 rounded-lg border text-xs transition-all",
+                    "flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-md text-xs transition-all cursor-pointer",
                     isSelected
-                      ? "bg-primary/5 border-primary text-foreground"
-                      : "bg-zinc-900/60 border-border/30 text-muted-foreground hover:bg-white/5 hover:text-foreground"
+                      ? "bg-background text-foreground border border-border/40 font-semibold shadow-sm"
+                      : "text-muted-foreground hover:text-foreground"
                   )}
                 >
-                  <Icon className="w-4 h-4" />
+                  <Icon className="w-3.5 h-3.5" />
                   <span>{opt.label}</span>
                 </button>
               )
@@ -75,7 +75,7 @@ export const SettingsFeature: React.FC = () => {
           <div className="space-y-1.5">
             <div className="flex items-center justify-between">
               <label className="text-[11px] text-muted-foreground">Editor Font Size</label>
-              <span className="text-[11px] font-mono bg-white/5 px-1.5 py-0.5 rounded text-foreground">{fontSize}px</span>
+              <span className="text-[11px] font-mono bg-muted px-1.5 py-0.5 rounded text-foreground">{fontSize}px</span>
             </div>
             <input
               type="range"
@@ -83,7 +83,7 @@ export const SettingsFeature: React.FC = () => {
               max="20"
               value={fontSize}
               onChange={handleFontChange}
-              className="w-full h-1 bg-zinc-800 rounded-lg appearance-none cursor-pointer accent-primary"
+              className="w-full h-1 bg-muted rounded-lg appearance-none cursor-pointer accent-primary"
             />
           </div>
 
@@ -93,7 +93,7 @@ export const SettingsFeature: React.FC = () => {
               type="checkbox"
               checked={wordWrap === "on"}
               onChange={handleWordWrapChange}
-              className="rounded border-border/50 text-primary w-3.5 h-3.5 bg-zinc-900 cursor-pointer"
+              className="rounded border border-border text-primary w-3.5 h-3.5 bg-background cursor-pointer"
             />
           </div>
         </div>
@@ -108,13 +108,13 @@ export const SettingsFeature: React.FC = () => {
               type="number"
               defaultValue="30000"
               disabled
-              className="w-full bg-zinc-900 border border-border/30 rounded-md px-2 py-1.5 text-xs text-muted-foreground/60 cursor-not-allowed opacity-50"
+              className="w-full bg-muted/30 border border-border rounded-md px-2 py-1.5 text-xs text-muted-foreground/60 cursor-not-allowed opacity-50"
             />
           </div>
         </div>
 
         {/* Local Storage details */}
-        <div className="pt-4 border-t border-border/20 flex items-start gap-2.5 text-[10px] text-muted-foreground/60 leading-relaxed bg-white/5 p-2 rounded-lg">
+        <div className="pt-4 border-t border-border/20 flex items-start gap-2.5 text-[10px] text-muted-foreground leading-relaxed bg-muted/40 p-2 rounded-lg">
           <HardDrive className="w-4 h-4 text-primary shrink-0 mt-0.5" />
           <span>All configurations are persistent and saved in active workspace. API traffic runs securely.</span>
         </div>

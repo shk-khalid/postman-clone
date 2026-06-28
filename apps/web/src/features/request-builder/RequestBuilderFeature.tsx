@@ -263,7 +263,7 @@ export const RequestBuilderFeature: React.FC = () => {
   ]
 
   return (
-    <div className="flex flex-col h-full bg-zinc-900/10 p-3 select-none gap-3 overflow-hidden">
+    <div className="flex flex-col h-full bg-background p-3 select-none gap-3 overflow-hidden">
       {/* Target Address Input */}
       <div className="flex flex-col gap-1 shrink-0">
         <div className="flex gap-2">
@@ -271,10 +271,10 @@ export const RequestBuilderFeature: React.FC = () => {
             disabled={activeTab.loading}
             value={activeTab.method}
             onChange={handleMethodChange}
-            className="bg-zinc-900 border border-border/30 rounded-md px-3 text-xs font-bold text-primary focus:outline-none focus:border-primary/60 cursor-pointer h-9 shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="bg-card border border-border rounded-md px-3 text-xs font-bold text-primary focus:outline-none focus:border-primary/60 cursor-pointer h-9 shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {methods.map((m) => (
-              <option key={m} value={m} className="bg-zinc-950 text-foreground font-semibold">
+              <option key={m} value={m} className="bg-card text-foreground font-semibold">
                 {m}
               </option>
             ))}
@@ -287,7 +287,7 @@ export const RequestBuilderFeature: React.FC = () => {
               placeholder="Enter request URL (e.g. https://{{base_url}}/users)"
               value={activeTab.url}
               onChange={handleUrlChange}
-              className="w-full bg-zinc-900 border border-border/30 rounded-md px-3 text-xs text-foreground placeholder-muted-foreground focus:outline-none focus:border-primary/50 transition-colors h-9 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full bg-card border border-border rounded-md px-3 text-xs text-foreground placeholder-muted-foreground focus:outline-none focus:border-primary/50 transition-colors h-9 disabled:opacity-50 disabled:cursor-not-allowed"
             />
           </div>
 
@@ -296,14 +296,14 @@ export const RequestBuilderFeature: React.FC = () => {
             <button
               onClick={() => setShowSaveDropdown(prev => !prev)}
               disabled={activeTab.loading}
-              className="flex items-center justify-center p-2.5 bg-zinc-900 border border-border/30 text-muted-foreground hover:text-foreground rounded-md transition-colors disabled:opacity-50 h-9"
+              className="flex items-center justify-center p-2.5 bg-card border border-border text-muted-foreground hover:text-foreground rounded-md transition-colors disabled:opacity-50 h-9"
               title="Save Request"
             >
               <Save className="w-4 h-4" />
             </button>
 
             {showSaveDropdown && (
-              <div className="absolute right-0 mt-1.5 w-56 bg-zinc-950 border border-border/30 rounded-lg shadow-xl py-1 z-50 text-xs">
+              <div className="absolute right-0 mt-1.5 w-56 bg-card border border-border rounded-lg shadow-xl py-1 z-50 text-xs">
                 <span className="block px-3 py-1.5 text-[10px] text-muted-foreground uppercase font-bold tracking-wider">Save to Collection</span>
                 <div className="max-h-40 overflow-y-auto">
                   {collections.map((col) => (
@@ -367,7 +367,7 @@ export const RequestBuilderFeature: React.FC = () => {
 
       {/* Tab Panels */}
       <div className={cn(
-        "flex-1 overflow-auto bg-zinc-950/20 border border-border/20 rounded-lg p-2.5 transition-opacity duration-250",
+        "flex-1 overflow-auto bg-card border border-border/20 rounded-lg p-2.5 transition-opacity duration-250",
         activeTab.loading ? "opacity-45 pointer-events-none" : "opacity-100"
       )}>
         {/* PARAMS TAB */}
@@ -376,7 +376,7 @@ export const RequestBuilderFeature: React.FC = () => {
             <div className="flex items-center justify-between pl-1">
               <span className="text-xs font-semibold text-foreground">Query Params</span>
             </div>
-            <div className="border border-border/30 rounded-md overflow-hidden bg-zinc-950/40">
+            <div className="border border-border/30 rounded-md overflow-hidden bg-background">
               <table className="w-full text-left text-[11px] border-collapse">
                 <thead>
                   <tr className="bg-white/5 border-b border-border/30 text-muted-foreground font-semibold">
@@ -528,7 +528,7 @@ export const RequestBuilderFeature: React.FC = () => {
                 </button>
               </div>
             </div>
-            <div className="border border-border/30 rounded-md overflow-hidden bg-zinc-950/40">
+            <div className="border border-border/30 rounded-md overflow-hidden bg-background">
               <table className="w-full text-left text-[11px] border-collapse">
                 <thead>
                   <tr className="bg-white/5 border-b border-border/30 text-muted-foreground font-semibold">

@@ -39,7 +39,7 @@ export const TabsBar: React.FC = () => {
   }
 
   return (
-    <div className="flex items-center bg-zinc-950/80 border-b border-border/40 overflow-x-auto h-10 select-none shrink-0 no-scrollbar">
+    <div className="flex items-center bg-card border-b border-border overflow-x-auto h-10 select-none shrink-0 no-scrollbar">
       {/* Tabs list view */}
       <div className="flex items-center h-full">
         {tabs.map((tab) => {
@@ -53,7 +53,7 @@ export const TabsBar: React.FC = () => {
               className={cn(
                 "group flex items-center gap-2 h-full px-3.5 text-xs border-r border-border/30 cursor-pointer transition-all relative shrink-0",
                 isActive
-                  ? "bg-zinc-900 text-foreground border-b-2 border-b-primary font-semibold"
+                  ? "bg-background text-foreground border-b-2 border-b-primary font-semibold"
                   : "text-muted-foreground hover:bg-white/2 hover:text-foreground"
               )}
             >

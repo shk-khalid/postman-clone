@@ -71,9 +71,9 @@ export const EnvironmentsFeature: React.FC = () => {
   }
 
   return (
-    <div className="flex h-full bg-zinc-950/60 border-r border-border/40 select-none overflow-hidden">
+    <div className="flex h-full bg-card border-r border-border select-none overflow-hidden">
       {/* Environments list */}
-      <div className="w-1/2 border-r border-border/30 flex flex-col h-full shrink-0 bg-zinc-950/40">
+      <div className="w-1/2 border-r border-border flex flex-col h-full shrink-0 bg-card">
         <div className="p-3 border-b border-border/40 flex flex-col gap-2">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Environments</span>
@@ -93,7 +93,7 @@ export const EnvironmentsFeature: React.FC = () => {
                 placeholder="Env name..."
                 value={newEnvName}
                 onChange={(e) => setNewEnvName(e.target.value)}
-                className="flex-1 bg-zinc-900 border border-border/30 rounded-md px-2 py-1 text-xs text-foreground focus:outline-none focus:border-primary/50"
+                className="flex-1 bg-background border border-border rounded-md px-2 py-1 text-xs text-foreground focus:outline-none focus:border-primary/50"
               />
               <button
                 type="submit"
@@ -196,7 +196,7 @@ export const EnvironmentsFeature: React.FC = () => {
       </div>
 
       {/* Selected env variables view */}
-      <div className="flex-1 flex flex-col h-full overflow-hidden bg-zinc-950/40">
+      <div className="flex-1 flex flex-col h-full overflow-hidden bg-card">
         {activeEnv ? (
           <div className="flex-1 flex flex-col h-full overflow-hidden p-3 gap-3">
             <div>
@@ -215,9 +215,9 @@ export const EnvironmentsFeature: React.FC = () => {
               <div className="flex-1 overflow-auto border border-border/30 rounded-md">
                 <table className="w-full text-[11px] text-left border-collapse">
                   <thead>
-                    <tr className="bg-white/5 border-b border-border/30 text-muted-foreground">
+                    <tr className="bg-muted/10 border-b border-border text-muted-foreground">
                       <th className="p-2 w-8 text-center">Active</th>
-                      <th className="p-2 border-r border-border/30">Variable Key</th>
+                      <th className="p-2 border-r border-border">Variable Key</th>
                       <th className="p-2">Value</th>
                       <th className="p-2 w-8"></th>
                     </tr>
@@ -230,7 +230,7 @@ export const EnvironmentsFeature: React.FC = () => {
                             type="checkbox"
                             checked={item.enabled}
                             onChange={(e) => handleVarChange(item.id, "enabled", e.target.checked)}
-                            className="rounded border-border/50 text-primary w-3 h-3 bg-zinc-900"
+                            className="rounded border border-border text-primary w-3 h-3 bg-background"
                           />
                         </td>
                         <td className="p-1 border-r border-border/30">

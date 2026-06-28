@@ -48,8 +48,8 @@ export const HistoryFeature: React.FC = () => {
   )
 
   return (
-    <div className="flex flex-col h-full bg-zinc-950/60 border-r border-border/40 select-none">
-      <div className="p-3 border-b border-border/40 flex flex-col gap-2">
+    <div className="flex flex-col h-full bg-card border-r border-border select-none">
+      <div className="p-3 border-b border-border flex flex-col gap-2">
         <div className="flex items-center justify-between">
           <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">History</span>
           {history.length > 0 && (
@@ -70,7 +70,7 @@ export const HistoryFeature: React.FC = () => {
             placeholder="Search history..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full bg-zinc-900 border border-border/30 rounded-md py-1.5 pl-8 pr-3 text-xs text-foreground placeholder-muted-foreground focus:outline-none focus:border-primary/50 transition-colors"
+            className="w-full bg-muted/40 border border-border rounded-md py-1.5 pl-8 pr-3 text-xs text-foreground placeholder-muted-foreground focus:outline-none focus:border-primary/50 transition-colors"
           />
         </div>
       </div>

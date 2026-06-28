@@ -110,7 +110,7 @@ export const ResponseViewerFeature: React.FC = () => {
   const matchCount = getSearchMatchCount()
 
   return (
-    <div className="flex flex-col h-full bg-zinc-900/10 p-3 select-none gap-3 overflow-hidden">
+    <div className="flex flex-col h-full bg-background p-3 select-none gap-3 overflow-hidden">
       {/* Response metadata header */}
       <div className="flex items-center justify-between border-b border-border/20 pb-2 shrink-0">
         <span className="text-xs font-semibold text-foreground tracking-tight">Response Details</span>
@@ -125,12 +125,12 @@ export const ResponseViewerFeature: React.FC = () => {
           </span>
 
           {/* Duration */}
-          <span className="text-[10px] font-bold bg-zinc-800 text-muted-foreground border border-border/30 px-2 py-0.5 rounded-full font-mono">
+          <span className="text-[10px] font-bold bg-muted text-muted-foreground border border-border px-2 py-0.5 rounded-full font-mono">
             Time: {response.duration} ms
           </span>
 
           {/* Size */}
-          <span className="text-[10px] font-bold bg-zinc-800 text-muted-foreground border border-border/30 px-2 py-0.5 rounded-full font-mono">
+          <span className="text-[10px] font-bold bg-muted text-muted-foreground border border-border px-2 py-0.5 rounded-full font-mono">
             Size: {(response.size / 1024).toFixed(2)} KB
           </span>
         </div>
@@ -159,7 +159,7 @@ export const ResponseViewerFeature: React.FC = () => {
           {activeSubTab === "body" && (
             <>
               {/* Internal Search */}
-              <div className="relative flex items-center bg-zinc-900 border border-border/30 rounded-md px-2 h-7 w-44">
+              <div className="relative flex items-center bg-background border border-border rounded-md px-2 h-7 w-44">
                 <Search className="w-3.5 h-3.5 text-muted-foreground mr-1.5 shrink-0" />
                 <input
                   type="text"
@@ -176,7 +176,7 @@ export const ResponseViewerFeature: React.FC = () => {
               </div>
 
               {/* Format Toggle */}
-              <div className="flex bg-zinc-900 border border-border/30 rounded-md p-0.5 text-[10px]">
+              <div className="flex bg-background border border-border rounded-md p-0.5 text-[10px]">
                 <button
                   onClick={() => setFormatMode("pretty")}
                   className={cn(
@@ -200,7 +200,7 @@ export const ResponseViewerFeature: React.FC = () => {
               {/* Copy Body */}
               <button
                 onClick={handleCopyBody}
-                className="p-1.5 rounded-md border border-border/30 bg-zinc-900 text-muted-foreground hover:text-foreground"
+                className="p-1.5 rounded-md border border-border bg-background text-muted-foreground hover:text-foreground"
                 title="Copy body payload"
               >
                 {copiedBody ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
@@ -211,7 +211,7 @@ export const ResponseViewerFeature: React.FC = () => {
           {activeSubTab === "headers" && (
             <button
               onClick={handleCopyHeaders}
-              className="flex items-center gap-1 px-2.5 py-1 text-[10px] font-semibold rounded border border-border/30 bg-zinc-900 text-muted-foreground hover:text-foreground h-7"
+              className="flex items-center gap-1 px-2.5 py-1 text-[10px] font-semibold rounded border border-border bg-background text-muted-foreground hover:text-foreground h-7"
               title="Copy all headers"
             >
               {copiedHeaders ? <Check className="w-3 h-3 text-emerald-500" /> : <Copy className="w-3 h-3" />}
@@ -222,7 +222,7 @@ export const ResponseViewerFeature: React.FC = () => {
           {/* Download Button */}
           <button
             onClick={handleDownload}
-            className="p-1.5 rounded-md border border-border/30 bg-zinc-900 text-muted-foreground hover:text-foreground h-7 flex items-center justify-center"
+            className="p-1.5 rounded-md border border-border bg-background text-muted-foreground hover:text-foreground h-7 flex items-center justify-center"
             title="Download payload"
           >
             <Download className="w-3.5 h-3.5" />
@@ -231,7 +231,7 @@ export const ResponseViewerFeature: React.FC = () => {
       </div>
 
       {/* Viewport content */}
-      <div className="flex-1 overflow-auto bg-zinc-950/20 border border-border/20 rounded-lg p-2.5">
+      <div className="flex-1 overflow-auto bg-card border border-border/20 rounded-lg p-2.5">
         {activeSubTab === "body" && (
           <div className="w-full h-full min-h-[140px]">
             {formatMode === "pretty" ? (

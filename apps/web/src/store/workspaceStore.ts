@@ -89,7 +89,15 @@ export const useWorkspaceStore = create<WorkspaceStore>((set) => ({
     })
   },
 
-  theme: "dark",
+  theme: (() => {
+    try {
+      const raw = localStorage.getItem("postman_clone_settings")
+      if (raw) {
+        return JSON.parse(raw).theme || "dark"
+      }
+    } catch {}
+    return "dark"
+  })(),
   setTheme: (theme) => {
     const root = window.document.documentElement
     root.classList.remove("light", "dark")

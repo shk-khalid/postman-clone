@@ -97,9 +97,9 @@ export const AppLayout: React.FC = () => {
   }
 
   return (
-    <div className="flex h-screen w-screen bg-zinc-950 text-foreground overflow-hidden font-sans antialiased">
+    <div className="flex h-screen w-screen bg-background text-foreground overflow-hidden font-sans antialiased">
       {/* 1. Feature Icon Switcher Sidebar */}
-      <div className="w-14 bg-zinc-950 border-r border-border/30 flex flex-col items-center py-4 justify-between shrink-0 select-none z-20">
+      <div className="w-14 bg-card border-r border-border flex flex-col items-center py-4 justify-between shrink-0 select-none z-20">
         <div className="flex flex-col items-center gap-6 w-full">
           {/* Logo */}
           <div className="w-8 h-8 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center text-primary hover:scale-105 transition-transform">
@@ -130,7 +130,7 @@ export const AppLayout: React.FC = () => {
                   title={item.label}
                 >
                   <Icon className="w-4 h-4" />
-                  <span className="absolute left-14 scale-0 group-hover:scale-100 transition-all origin-left bg-zinc-900 border border-border/30 text-[10px] text-foreground font-semibold px-2 py-1 rounded shadow-lg pointer-events-none z-50 whitespace-nowrap">
+                  <span className="absolute left-14 scale-0 group-hover:scale-100 transition-all origin-left bg-card border border-border text-[10px] text-foreground font-semibold px-2 py-1 rounded shadow-lg pointer-events-none z-50 whitespace-nowrap">
                     {item.label}
                   </span>
                 </button>
@@ -166,9 +166,9 @@ export const AppLayout: React.FC = () => {
       )}
 
       {/* 3. Main REST Workspace Viewport */}
-      <div className="flex-1 flex flex-col overflow-hidden bg-zinc-950/20">
+      <div className="flex-1 flex flex-col overflow-hidden bg-background">
         {/* Header bar */}
-        <header className="h-12 bg-zinc-950/45 border-b border-border/40 flex items-center justify-between px-4 select-none shrink-0 z-10">
+        <header className="h-12 bg-card border-b border-border flex items-center justify-between px-4 select-none shrink-0 z-10">
           <div className="flex items-center gap-2">
             <h1 className="text-xs font-bold uppercase tracking-widest text-primary flex items-center gap-1.5">
               <span>REST Client</span>
@@ -180,7 +180,7 @@ export const AppLayout: React.FC = () => {
 
           {/* Environment variables switcher */}
           <div className="flex items-center gap-3">
-            <div className="flex items-center gap-1.5 bg-zinc-900 border border-border/30 rounded-md px-2.5 py-1 text-xs">
+            <div className="flex items-center gap-1.5 bg-muted/40 border border-border rounded-md px-2.5 py-1 text-xs">
               <Shield className="w-3.5 h-3.5 text-primary" />
               <select
                 value={activeEnvironmentId || "no-env"}
@@ -188,7 +188,7 @@ export const AppLayout: React.FC = () => {
                 className="bg-transparent border-none text-[11px] font-semibold text-foreground focus:outline-none cursor-pointer pr-1"
               >
                 {environments.map((env) => (
-                  <option key={env.id} value={env.id} className="bg-zinc-950 text-foreground font-semibold">
+                  <option key={env.id} value={env.id} className="bg-background text-foreground font-semibold">
                     {env.name}
                   </option>
                 ))}
@@ -209,10 +209,10 @@ export const AppLayout: React.FC = () => {
                 defaultSize={260}
                 firstPane={<RequestBuilderFeature />}
                 secondPane={<ResponseViewerFeature />}
-                className="bg-zinc-950/10"
+                className="bg-muted/10"
               />
             ) : (
-              <div className="h-full flex items-center justify-center p-8 bg-zinc-950/5">
+              <div className="h-full flex items-center justify-center p-8 bg-background">
                 <EmptyState
                   icon={Sparkles}
                   title="Welcome to REST API Client"
