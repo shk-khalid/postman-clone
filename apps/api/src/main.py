@@ -28,13 +28,6 @@ app = FastAPI(
     debug=settings.DEBUG,
 )
 
-# Register TrustedHostMiddleware if restricted
-if settings.ALLOWED_HOSTS and settings.ALLOWED_HOSTS != "*":
-    app.add_middleware(
-        TrustedHostMiddleware,
-        allowed_hosts=settings.allowed_hosts_list
-    )
-
 # Register CORS middleware
 app.add_middleware(
     CORSMiddleware,

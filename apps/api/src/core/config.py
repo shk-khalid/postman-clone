@@ -9,16 +9,11 @@ class Settings(BaseSettings):
 
     DATABASE_URL: str = "sqlite:///./postman.db"
     CORS_ORIGINS: str = "http://localhost:5173,http://127.0.0.1:5173,http://localhost:3000"
-    ALLOWED_HOSTS: str
 
     DEFAULT_TIMEOUT: float = 10.0
     DEFAULT_VERIFY_SSL: bool = True
     DEFAULT_FOLLOW_REDIRECTS: bool = True
     DEFAULT_MAX_RESPONSE_SIZE: int = 10485760
-
-    @property
-    def allowed_hosts_list(self) -> list[str]:
-        return [host.strip() for host in self.ALLOWED_HOSTS.split(",") if host.strip()]
 
     @property
     def cors_origins_list(self) -> list[str]:
