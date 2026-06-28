@@ -72,6 +72,12 @@ apps/api/.ipynb_checkpoints/
 apps/api/.env
 apps/api/db.sqlite3
 
+# Databases / SQLite
+apps/api/*.db
+apps/api/*.sqlite3
+postman.db
+**/postman.db
+
 # Generic development ignore
 .vscode/
 .idea/
