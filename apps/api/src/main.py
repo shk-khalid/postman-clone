@@ -21,11 +21,19 @@ from src.models.request import SavedRequest  # noqa: F401
 from src.models.settings import Settings  # noqa: F401
 
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.trustedhost import TrustedHostMiddleware
 
 app = FastAPI(
     title=settings.APP_NAME,
     debug=settings.DEBUG,
 )
+
+# Register TrustedHostMiddleware if restricted
+if settings.ALLOWED_HOSTS and settings.ALLOWED_HOSTS != "*":
+    app.add_middleware(
+        TrustedHostMiddleware,
+        allowed_hosts=settings.allowed_hosts_list
+    )
 
 # Register CORS middleware
 app.add_middleware(
