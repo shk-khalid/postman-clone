@@ -193,24 +193,28 @@ export const RequestBuilderFeature: React.FC = () => {
   }
 
   // Save to Collection Action
-  const handleSaveToCollection = (collectionId: string) => {
-    addRequestToCollection(collectionId, {
-      id: activeTab.id,
-      name: activeTab.name === "New Request" ? `${activeTab.method} ${resolvedUrl.replace("https://", "").replace("http://", "").slice(0, 20)}` : activeTab.name,
-      method: activeTab.method,
-      url: activeTab.url,
-      headers: activeTab.headers,
-      params: activeTab.params,
-      bodyType: activeTab.bodyType,
-      body: activeTab.body,
-      authType: activeTab.authType,
-      bearerToken: activeTab.bearerToken,
-      basicUsername: activeTab.basicUsername,
-      basicPassword: activeTab.basicPassword,
-    })
-    updateTab(activeTab.id, { isDirty: false })
-    setShowSaveDropdown(false)
-    showToast("Request saved to collection", "success")
+  const handleSaveToCollection = async (collectionId: string) => {
+    try {
+      await addRequestToCollection(collectionId, {
+        id: activeTab.id,
+        name: activeTab.name === "New Request" ? `${activeTab.method} ${resolvedUrl.replace("https://", "").replace("http://", "").slice(0, 20)}` : activeTab.name,
+        method: activeTab.method,
+        url: activeTab.url,
+        headers: activeTab.headers,
+        params: activeTab.params,
+        bodyType: activeTab.bodyType,
+        body: activeTab.body,
+        authType: activeTab.authType,
+        bearerToken: activeTab.bearerToken,
+        basicUsername: activeTab.basicUsername,
+        basicPassword: activeTab.basicPassword,
+      })
+      updateTab(activeTab.id, { isDirty: false })
+      setShowSaveDropdown(false)
+      showToast("Request saved to collection", "success")
+    } catch {
+      showToast("Failed to save request to collection", "error")
+    }
   }
 
   const handleSend = async () => {

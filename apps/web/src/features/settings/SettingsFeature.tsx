@@ -102,13 +102,43 @@ export const SettingsFeature: React.FC = () => {
         <div className="space-y-3 pt-3 border-t border-border/20">
           <h4 className="text-xs font-semibold text-foreground">Network & Request</h4>
 
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] text-muted-foreground">SSL Verification</span>
+            <input
+              type="checkbox"
+              checked={useSettingsStore().verify_ssl}
+              onChange={(e) => updateSettings({ verify_ssl: e.target.checked })}
+              className="rounded border border-border text-primary w-3.5 h-3.5 bg-background cursor-pointer"
+            />
+          </div>
+
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] text-muted-foreground">Follow Redirects</span>
+            <input
+              type="checkbox"
+              checked={useSettingsStore().follow_redirects}
+              onChange={(e) => updateSettings({ follow_redirects: e.target.checked })}
+              className="rounded border border-border text-primary w-3.5 h-3.5 bg-background cursor-pointer"
+            />
+          </div>
+
           <div className="flex flex-col gap-1.5">
-            <label className="text-[11px] text-muted-foreground">Request Timeout (ms)</label>
+            <label className="text-[11px] text-muted-foreground">Request Timeout (seconds)</label>
             <input
               type="number"
-              defaultValue="30000"
-              disabled
-              className="w-full bg-muted/30 border border-border rounded-md px-2 py-1.5 text-xs text-muted-foreground/60 cursor-not-allowed opacity-50"
+              value={useSettingsStore().default_timeout}
+              onChange={(e) => updateSettings({ default_timeout: parseFloat(e.target.value) || 10.0 })}
+              className="w-full bg-background border border-border rounded-md px-2 py-1.5 text-xs text-foreground focus:outline-none focus:border-primary/50"
+            />
+          </div>
+
+          <div className="flex flex-col gap-1.5">
+            <label className="text-[11px] text-muted-foreground">Max Response Size (bytes)</label>
+            <input
+              type="number"
+              value={useSettingsStore().max_response_size}
+              onChange={(e) => updateSettings({ max_response_size: parseInt(e.target.value, 10) || 10485760 })}
+              className="w-full bg-background border border-border rounded-md px-2 py-1.5 text-xs text-foreground focus:outline-none focus:border-primary/50"
             />
           </div>
         </div>

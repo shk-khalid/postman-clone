@@ -1,26 +1,24 @@
 import { apiClient } from "./apiClient"
 
-export interface AppSettings {
-  theme: "dark" | "light" | "system"
-  fontSize: number
-  wordWrap: "on" | "off"
-  sidebarWidth: number
-  sidebarCollapsed: boolean
-  defaultEnvId: string
+export interface BackendSettings {
+  follow_redirects: boolean
+  verify_ssl: boolean
+  default_timeout: number
+  max_response_size: number
 }
 
 export const settingsApi = {
-  async get(): Promise<AppSettings | null> {
+  async get(): Promise<BackendSettings | null> {
     try {
-      const res = await apiClient.get<AppSettings>("/settings")
+      const res = await apiClient.get<BackendSettings>("/api/settings")
       return res.data
     } catch {
       return null
     }
   },
 
-  async save(settings: AppSettings): Promise<AppSettings> {
-    const res = await apiClient.put<AppSettings>("/settings", settings)
+  async save(settings: Partial<BackendSettings>): Promise<BackendSettings> {
+    const res = await apiClient.patch<BackendSettings>("/api/settings", settings)
     return res.data
   },
 }

@@ -1,76 +1,67 @@
 import { Tab } from "@/store/tabStore"
-import { resolveVariables } from "@/lib/variableResolver"
+import { useWorkspaceStore } from "@/store/workspaceStore"
 import { requestApi, RequestPayload, NormalizedResponse } from "../api/requestApi"
 
 export const requestService = {
   /**
-   * Prepares and dispatches a request using the tab state definitions,
-   * resolving environment variables and serializing parameters.
+   * Prepares and dispatches a request to the backend.
+   * Variables are resolved on the backend server based on environment_id.
    */
   async execute(tab: Tab): Promise<NormalizedResponse> {
-    // 1. Substitution on URL
-    let resolvedUrl = resolveVariables(tab.url)
-
-    // 2. Query parameter serialization & attachment
+    // Collect active params
     const activeParams = tab.params.filter((p) => p.key && p.active)
-    if (activeParams.length > 0) {
-      const searchParams = new URLSearchParams()
-      activeParams.forEach((p) => {
-        searchParams.append(resolveVariables(p.key), resolveVariables(p.value))
-      })
-      const connector = resolvedUrl.includes("?") ? "&" : "?"
-      resolvedUrl = `${resolvedUrl}${connector}${searchParams.toString()}`
-    }
+    const paramsMap = activeParams.reduce((acc, curr) => ({ ...acc, [curr.key]: curr.value }), {})
 
-    // 3. Header formatting and variable resolution
-    const resolvedHeaders: Record<string, string> = {}
+    // Collect headers
+    const headersMap: Record<string, string> = {}
     tab.headers
       .filter((h) => h.key && h.active)
       .forEach((h) => {
-        resolvedHeaders[h.key] = resolveVariables(h.value)
+        headersMap[h.key] = h.value
       })
 
-    // 4. Authorization injection
+    // Setup Auth values for backend validation
+    let authMap: Record<string, string> | undefined = undefined
     if (tab.authType === "bearer" && tab.bearerToken) {
-      resolvedHeaders["Authorization"] = `Bearer ${resolveVariables(tab.bearerToken)}`
+      authMap = { bearer: tab.bearerToken }
     } else if (tab.authType === "basic") {
-      const u = resolveVariables(tab.basicUsername)
-      const p = resolveVariables(tab.basicPassword)
-      resolvedHeaders["Authorization"] = `Basic ${btoa(`${u}:${p}`)}`
+      authMap = { username: tab.basicUsername, password: tab.basicPassword }
     }
 
-    // 5. Body payload resolution
-    let resolvedBody = tab.body
+    // Body content processing
+    let bodyVal: string | undefined = undefined
     if (tab.bodyType === "json" || tab.bodyType === "raw") {
-      resolvedBody = resolveVariables(tab.body)
+      bodyVal = tab.body
     } else if (tab.bodyType === "form-data") {
-      // Serialize Form Data parameters
       const fields = (tab.formData || [])
         .filter((f) => f.key && f.active)
-        .reduce((acc, curr) => ({ ...acc, [curr.key]: resolveVariables(curr.value) }), {})
-      resolvedBody = JSON.stringify(fields)
-      resolvedHeaders["Content-Type"] = "multipart/form-data"
+        .reduce((acc, curr) => ({ ...acc, [curr.key]: curr.value }), {})
+      bodyVal = JSON.stringify(fields)
+      headersMap["Content-Type"] = "multipart/form-data"
     } else if (tab.bodyType === "x-www-form-urlencoded") {
-      // Serialize URL Encoded parameters
       const fields = (tab.urlEncoded || [])
         .filter((f) => f.key && f.active)
-        .map((f) => `${encodeURIComponent(f.key)}=${encodeURIComponent(resolveVariables(f.value))}`)
+        .map((f) => `${encodeURIComponent(f.key)}=${encodeURIComponent(f.value)}`)
         .join("&")
-      resolvedBody = fields
-      resolvedHeaders["Content-Type"] = "application/x-www-form-urlencoded"
+      bodyVal = fields
+      headersMap["Content-Type"] = "application/x-www-form-urlencoded"
     }
 
-    // Prepare standardized RequestPayload
+    // Get selected environment ID
+    const activeEnvId = useWorkspaceStore.getState().activeEnvironmentId
+    // Parse environment ID as number if valid, otherwise pass null
+    const environmentIdVal = (activeEnvId && activeEnvId !== "no-env") ? parseInt(activeEnvId, 10) : null
+
     const payload: RequestPayload = {
       method: tab.method,
-      url: resolvedUrl,
-      headers: resolvedHeaders,
-      params: activeParams.reduce((acc, curr) => ({ ...acc, [curr.key]: curr.value }), {}),
-      bodyType: tab.bodyType,
-      body: resolvedBody,
+      url: tab.url,
+      headers: headersMap,
+      params: paramsMap,
+      body: bodyVal,
+      auth: authMap,
+      environment_id: environmentIdVal
     }
 
-    // Dispatch via API Client adapter
     return await requestApi.send(payload)
   },
 }

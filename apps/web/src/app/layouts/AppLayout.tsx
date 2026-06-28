@@ -3,6 +3,8 @@ import { Folder, Shield, History, Settings, Sparkles, Plus, ChevronLeft, Chevron
 import { useWorkspaceStore } from "@/store/workspaceStore"
 import { useTabStore } from "@/store/tabStore"
 import { useSettingsStore } from "@/store/settingsStore"
+import { useCollectionStore } from "@/store/collectionStore"
+import { useHistoryStore } from "@/store/historyStore"
 import { CollectionsFeature } from "@/features/collections/CollectionsFeature"
 import { EnvironmentsFeature } from "@/features/environments/EnvironmentsFeature"
 import { EnvironmentEditor } from "@/features/environments/EnvironmentEditor"
@@ -19,10 +21,22 @@ import { cn } from "@/lib/utils"
 export const AppLayout: React.FC = () => {
   const { activeFeature, setActiveFeature, environments, activeEnvironmentId, setActiveEnvironmentId, theme } = useWorkspaceStore()
   const { tabs, activeTabId, addTab } = useTabStore()
+  const { fetchCollections } = useCollectionStore()
+  const { fetchEnvironments } = useWorkspaceStore()
+  const { fetchHistory } = useHistoryStore()
+  const { fetchSettings } = useSettingsStore()
 
   // Settings store parameters
   const { sidebarWidth, sidebarCollapsed, updateSettings } = useSettingsStore()
   const isResizingSidebar = useRef(false)
+
+  // Fetch initial workspace data from API backend on mount
+  useEffect(() => {
+    fetchCollections()
+    fetchEnvironments()
+    fetchHistory()
+    fetchSettings()
+  }, [])
 
   const menuItems = [
     { id: "collections", label: "Collections", icon: Folder },

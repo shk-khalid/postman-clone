@@ -1,6 +1,7 @@
 import React, { useState } from "react"
 import { Folder, FileText, ChevronRight, ChevronDown, Plus, Search, Trash2, Edit2, Check, X, Copy, ArrowRightLeft } from "lucide-react"
 import { useCollectionStore, Collection, CollectionRequest } from "@/store/collectionStore"
+import { collectionApi } from "@/services/api/collectionApi"
 import { useTabStore } from "@/store/tabStore"
 import { useToastStore } from "@/store/toastStore"
 import { cn } from "@/lib/utils"
@@ -85,66 +86,39 @@ export const CollectionsFeature: React.FC = () => {
   }
 
   // Duplicate Collection
-  const handleDuplicateCollection = (col: Collection) => {
-    const newId = crypto.randomUUID()
-    const duplicatedRequests = col.requests.map((r) => ({
-      ...r,
-      id: crypto.randomUUID(),
-      name: `${r.name} Copy`,
-    }))
-    
-    const storeState = useCollectionStore.getState()
-    const updated = [...storeState.collections, {
-      id: newId,
-      name: `${col.name} Copy`,
-      requests: duplicatedRequests,
-    }]
-    
-    // Trigger update
-    useCollectionStore.setState({ collections: updated })
-    localStorage.setItem("postman_clone_collections", JSON.stringify(updated))
-    showToast(`Duplicated collection "${col.name}"`, "success")
-  }
-
-  // Duplicate Request
-  const handleDuplicateRequest = (colId: string, req: CollectionRequest) => {
-    const dup: Partial<CollectionRequest> = {
-      ...req,
-      id: crypto.randomUUID(),
-      name: `${req.name} Copy`,
-    }
-    addRequestToCollection(colId, dup)
-    showToast(`Duplicated request "${req.name}"`, "success")
-  }
-
-  // Move request between collections
-  const handleMoveRequest = (targetColId: string) => {
-    if (!movingRequestId || !sourceCollectionId) return
-    const storeState = useCollectionStore.getState()
-    
-    let requestToMove: CollectionRequest | undefined
-    
-    // Find request in source
-    const updated = storeState.collections.map((col) => {
-      if (col.id === sourceCollectionId) {
-        requestToMove = col.requests.find((r) => r.id === movingRequestId)
-        return { ...col, requests: col.requests.filter((r) => r.id !== movingRequestId) }
+  const handleDuplicateCollection = async (col: Collection) => {
+    try {
+      const newCol = await collectionApi.createCollection(`${col.name} Copy`, col.description)
+      for (const r of col.requests) {
+        await collectionApi.saveRequest(newCol.id, r)
       }
-      return col
-    })
-
-    if (requestToMove) {
-      const final = updated.map((col) => {
-        if (col.id === targetColId) {
-          return { ...col, requests: [...col.requests, requestToMove!] }
-        }
-        return col
-      })
-      useCollectionStore.setState({ collections: final })
-      localStorage.setItem("postman_clone_collections", JSON.stringify(final))
-      showToast("Request moved successfully", "success")
+      await useCollectionStore.getState().fetchCollections()
+      showToast(`Duplicated collection "${col.name}"`, "success")
+    } catch {
+      showToast("Failed to duplicate collection", "error")
     }
-
+  }
+ 
+  // Duplicate Request
+  const handleDuplicateRequest = async (colId: string, req: CollectionRequest) => {
+    try {
+      await useCollectionStore.getState().duplicateRequest(colId, req.id)
+      showToast(`Duplicated request "${req.name}"`, "success")
+    } catch {
+      showToast("Failed to duplicate request", "error")
+    }
+  }
+ 
+  // Move request between collections
+  const handleMoveRequest = async (targetColId: string) => {
+    if (!movingRequestId || !sourceCollectionId) return
+    try {
+      await useCollectionStore.getState().moveRequest(movingRequestId, targetColId)
+      showToast("Request moved successfully", "success")
+    } catch {
+      showToast("Failed to move request", "error")
+    }
+ 
     setMovingRequestId(null)
     setSourceCollectionId(null)
   }

@@ -1,4 +1,5 @@
 import { create } from "zustand"
+import { historyApi } from "@/services/api/historyApi"
 import { HTTPMethod, Tab } from "./tabStore"
 
 export interface HistoryItem {
@@ -14,46 +15,53 @@ export interface HistoryItem {
 
 interface HistoryStore {
   history: HistoryItem[]
-  addToHistory: (item: Omit<HistoryItem, "id" | "timestamp">) => void
-  clearHistory: () => void
-  deleteHistoryItem: (id: string) => void
+  loading: boolean
+  fetchHistory: (filters?: { search?: string; method?: string; status?: number }) => Promise<void>
+  addToHistory: (item: any) => void  // Kept for backward compatibility but delegates to refresh
+  clearHistory: () => Promise<void>
+  deleteHistoryItem: (id: string) => Promise<void>
 }
 
-const loadHistory = (): HistoryItem[] => {
-  try {
-    const raw = localStorage.getItem("postman_clone_history")
-    if (raw) return JSON.parse(raw)
-  } catch (e) {
-    console.error("Failed to load history", e)
+export const useHistoryStore = create<HistoryStore>((set, get) => ({
+  history: [],
+  loading: false,
+
+  fetchHistory: async (filters) => {
+    set({ loading: true })
+    try {
+      const data = await historyApi.getAll(filters)
+      set({ history: data })
+    } catch (e) {
+      console.error("Failed to load history", e)
+    } finally {
+      set({ loading: false })
+    }
+  },
+
+  addToHistory: () => {
+    // History is logged automatically on the backend during Request execution.
+    // Simply fetch latest to refresh
+    get().fetchHistory()
+  },
+
+  clearHistory: async () => {
+    try {
+      await historyApi.clear()
+      set({ history: [] })
+    } catch (e) {
+      console.error("Failed to clear history", e)
+    }
+  },
+
+  deleteHistoryItem: async (id) => {
+    try {
+      await historyApi.deleteItem(id)
+      set((state) => ({
+        history: state.history.filter((h) => h.id !== id)
+      }))
+    } catch (e) {
+      console.error("Failed to delete history item", e)
+    }
   }
-  return []
-}
-
-export const useHistoryStore = create<HistoryStore>((set) => ({
-  history: loadHistory(),
-
-  addToHistory: (item) =>
-    set((state) => {
-      const newItem: HistoryItem = {
-        ...item,
-        id: crypto.randomUUID(),
-        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      }
-      const updated = [newItem, ...state.history].slice(0, 50) // Limit to last 50 items
-      localStorage.setItem("postman_clone_history", JSON.stringify(updated))
-      return { history: updated }
-    }),
-
-  clearHistory: () =>
-    set(() => {
-      localStorage.removeItem("postman_clone_history")
-      return { history: [] }
-    }),
-
-  deleteHistoryItem: (id) =>
-    set((state) => {
-      const updated = state.history.filter((h) => h.id !== id)
-      localStorage.setItem("postman_clone_history", JSON.stringify(updated))
-      return { history: updated }
-    }),
 }))
+export default useHistoryStore

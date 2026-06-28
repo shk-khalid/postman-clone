@@ -1,4 +1,5 @@
 import { create } from "zustand"
+import { environmentApi } from "@/services/api/environmentApi"
 
 export type SidebarFeature = "collections" | "environments" | "history" | "settings"
 
@@ -21,72 +22,93 @@ interface WorkspaceStore {
   environments: Environment[]
   activeEnvironmentId: string | null
   setActiveEnvironmentId: (id: string | null) => void
-  addEnvironment: (name: string) => void
-  updateEnvironment: (id: string, name: string, variables: EnvVar[]) => void
-  deleteEnvironment: (id: string) => void
+  fetchEnvironments: () => Promise<void>
+  addEnvironment: (name: string) => Promise<void>
+  updateEnvironment: (id: string, name: string, variables: EnvVar[]) => Promise<void>
+  deleteEnvironment: (id: string) => Promise<void>
   theme: "dark" | "light" | "system"
   setTheme: (theme: "dark" | "light" | "system") => void
 }
 
-const defaultEnvironments: Environment[] = [
-  {
-    id: "no-env",
-    name: "No Environment",
-    variables: [],
-  },
-  {
-    id: "env-production",
-    name: "Production API",
-    variables: [
-      { id: "1", key: "baseUrl", value: "https://api.production.com/v1", enabled: true },
-      { id: "2", key: "authToken", value: "prod-bearer-token-123", enabled: true },
-    ],
-  },
-  {
-    id: "env-staging",
-    name: "Staging Environment",
-    variables: [
-      { id: "1", key: "baseUrl", value: "https://api.staging.com/v1", enabled: true },
-      { id: "2", key: "authToken", value: "staging-bearer-token-456", enabled: true },
-    ],
-  },
-]
-
-export const useWorkspaceStore = create<WorkspaceStore>((set) => ({
+export const useWorkspaceStore = create<WorkspaceStore>((set, get) => ({
   activeFeature: "collections",
   setActiveFeature: (feature) => set({ activeFeature: feature }),
-  environments: defaultEnvironments,
+  environments: [{ id: "no-env", name: "No Environment", variables: [] }],
   activeEnvironmentId: "no-env",
   setActiveEnvironmentId: (id) => set({ activeEnvironmentId: id }),
 
-  addEnvironment: (name) => {
-    const newEnv: Environment = {
-      id: crypto.randomUUID(),
-      name,
-      variables: [{ id: crypto.randomUUID(), key: "", value: "", enabled: true }],
-    }
-    set((state) => ({
-      environments: [...state.environments, newEnv],
-      activeEnvironmentId: newEnv.id,
-    }))
-  },
-
-  updateEnvironment: (id, name, variables) => {
-    set((state) => ({
-      environments: state.environments.map((env) =>
-        env.id === id ? { ...env, name, variables } : env
-      ),
-    }))
-  },
-
-  deleteEnvironment: (id) => {
-    set((state) => {
-      const filtered = state.environments.filter((env) => env.id !== id)
-      return {
-        environments: filtered,
-        activeEnvironmentId: state.activeEnvironmentId === id ? "no-env" : state.activeEnvironmentId,
+  fetchEnvironments: async () => {
+    try {
+      const data = await environmentApi.getAll()
+      set({ environments: data })
+      // Keep active environment id if it still exists, otherwise reset to no-env
+      const currentActive = get().activeEnvironmentId
+      if (currentActive && !data.some(e => e.id === currentActive)) {
+        set({ activeEnvironmentId: "no-env" })
       }
-    })
+    } catch (e) {
+      console.error("Failed to load environments from API", e)
+    }
+  },
+
+  addEnvironment: async (name) => {
+    try {
+      const newEnv = await environmentApi.create(name)
+      await get().fetchEnvironments()
+      set({ activeEnvironmentId: newEnv.id })
+    } catch (e) {
+      console.error("Failed to create environment", e)
+    }
+  },
+
+  updateEnvironment: async (id, name, variables) => {
+    try {
+      const currentEnv = get().environments.find((e) => e.id === id)
+      if (!currentEnv) return
+
+      // 1. Rename environment if modified
+      if (currentEnv.name !== name) {
+        await environmentApi.rename(id, name)
+      }
+
+      // Filter out trailing empty rows from API updates
+      const cleanVars = variables.filter(v => v.key.trim() || v.value.trim())
+
+      // 2. Identify variables to delete
+      const currentCleanVars = currentEnv.variables.filter(v => v.key.trim() || v.value.trim())
+      for (const oldVar of currentCleanVars) {
+        if (!cleanVars.some(v => v.id === oldVar.id)) {
+          await environmentApi.deleteVariable(oldVar.id)
+        }
+      }
+
+      // 3. Identify variables to add or update
+      for (const newVar of cleanVars) {
+        const existing = currentCleanVars.find(v => v.id === newVar.id)
+        if (existing) {
+          if (existing.key !== newVar.key || existing.value !== newVar.value) {
+            await environmentApi.updateVariable(newVar.id, newVar.key, newVar.value)
+          }
+        } else {
+          await environmentApi.addVariable(id, newVar.key, newVar.value)
+        }
+      }
+
+      // Reload environments to sync latest values
+      await get().fetchEnvironments()
+    } catch (e) {
+      console.error("Failed to update environment", e)
+    }
+  },
+
+  deleteEnvironment: async (id) => {
+    try {
+      if (id === "no-env") return
+      await environmentApi.delete(id)
+      await get().fetchEnvironments()
+    } catch (e) {
+      console.error("Failed to delete environment", e)
+    }
   },
 
   theme: (() => {
@@ -111,3 +133,4 @@ export const useWorkspaceStore = create<WorkspaceStore>((set) => ({
     set({ theme })
   },
 }))
+export default useWorkspaceStore

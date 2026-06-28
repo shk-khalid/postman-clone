@@ -1,78 +1,45 @@
-// Simulated base Axios-like client that wraps localStorage transactions.
-// In the future, this can be swapped with axios.create() directly.
-export interface ApiResponse<T> {
-  data: T
-  status: number
-  statusText: string
-  headers: Record<string, string>
-}
+import axios from "axios"
 
-class ApiClient {
-  private delay(ms: number) {
-    return new Promise((resolve) => setTimeout(resolve, ms))
-  }
+// Base URL for the FastAPI backend API
+const BASE_URL = (import.meta.env.VITE_API_URL as string) || "http://localhost:8000"
 
-  async get<T>(url: string, config?: any): Promise<ApiResponse<T>> {
-    await this.delay(100)
-    // Extract key from simulated routes (e.g. /collections -> postman_clone_collections)
-    const key = this.getStorageKey(url)
-    const data = JSON.parse(localStorage.getItem(key) || "[]")
-    return {
-      data: data as T,
-      status: 200,
-      statusText: "OK",
-      headers: { "content-type": "application/json" },
+export const apiClient = axios.create({
+  baseURL: BASE_URL,
+  timeout: 30000,
+  headers: {
+    "Content-Type": "application/json",
+  },
+})
+
+// Response Interceptor to unpack the standardized StandardResponse wrappers
+apiClient.interceptors.response.use(
+  (response) => {
+    const responseBody = response.data
+    // If backend returns StandardResponse wrapper format, unpack data
+    if (responseBody && typeof responseBody === "object" && "success" in responseBody) {
+      if (responseBody.success) {
+        return {
+          ...response,
+          data: responseBody.data,
+        }
+      } else {
+        const errorMsg = responseBody.message || "API request execution failed."
+        return Promise.reject(new Error(errorMsg))
+      }
     }
-  }
-
-  async post<T>(url: string, data: any, config?: any): Promise<ApiResponse<T>> {
-    await this.delay(150)
-    const key = this.getStorageKey(url)
-    const current = JSON.parse(localStorage.getItem(key) || "[]")
-    const updated = Array.isArray(current) ? [...current, data] : data
-    localStorage.setItem(key, JSON.stringify(updated))
-    return {
-      data: data as T,
-      status: 201,
-      statusText: "Created",
-      headers: { "content-type": "application/json" },
+    return response
+  },
+  (error) => {
+    // Standardize error formats from server failures
+    const responseData = error.response?.data
+    if (responseData && typeof responseData === "object") {
+      if (responseData.message) {
+        return Promise.reject(new Error(responseData.message))
+      }
+      if (responseData.detail) {
+        return Promise.reject(new Error(responseData.detail))
+      }
     }
+    return Promise.reject(error)
   }
-
-  async put<T>(url: string, data: any, config?: any): Promise<ApiResponse<T>> {
-    await this.delay(150)
-    const key = this.getStorageKey(url)
-    localStorage.setItem(key, JSON.stringify(data))
-    return {
-      data: data as T,
-      status: 200,
-      statusText: "OK",
-      headers: { "content-type": "application/json" },
-    }
-  }
-
-  async delete<T>(url: string, config?: any): Promise<ApiResponse<T>> {
-    await this.delay(100)
-    const key = this.getStorageKey(url)
-    // In mockup mode, DELETE typically resets or deletes a key
-    if (url.includes("/history/clear")) {
-      localStorage.removeItem("postman_clone_history")
-    }
-    return {
-      data: {} as T,
-      status: 200,
-      statusText: "OK",
-      headers: { "content-type": "application/json" },
-    }
-  }
-
-  private getStorageKey(url: string): string {
-    if (url.includes("/collections")) return "postman_clone_collections"
-    if (url.includes("/environments")) return "postman_clone_environments"
-    if (url.includes("/history")) return "postman_clone_history"
-    if (url.includes("/settings")) return "postman_clone_settings"
-    return "postman_clone_default"
-  }
-}
-
-export const apiClient = new ApiClient()
+)

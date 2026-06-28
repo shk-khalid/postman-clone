@@ -1,53 +1,113 @@
 import { create } from "zustand"
+import { settingsApi } from "@/services/api/settingsApi"
 
-interface Settings {
+export interface AppSettings {
   theme: "dark" | "light" | "system"
   fontSize: number
   wordWrap: "on" | "off"
   sidebarWidth: number
   sidebarCollapsed: boolean
   defaultEnvId: string
+  // Backend execution settings
+  follow_redirects: boolean
+  verify_ssl: boolean
+  default_timeout: number
+  max_response_size: number
 }
 
-interface SettingsStore extends Settings {
-  updateSettings: (settings: Partial<Settings>) => void
+interface SettingsStore extends AppSettings {
+  fetchSettings: () => Promise<void>
+  updateSettings: (settings: Partial<AppSettings>) => Promise<void>
 }
 
-const DEFAULT_SETTINGS: Settings = {
+const DEFAULT_SETTINGS: AppSettings = {
   theme: "dark",
   fontSize: 13,
   wordWrap: "on",
-  sidebarWidth: 288, // 72rem or similar
+  sidebarWidth: 288,
   sidebarCollapsed: false,
   defaultEnvId: "no-env",
+  follow_redirects: true,
+  verify_ssl: true,
+  default_timeout: 10.0,
+  max_response_size: 10485760,
 }
 
-const loadSettings = (): Settings => {
+const loadLocalSettings = () => {
   try {
     const raw = localStorage.getItem("postman_clone_settings")
     if (raw) {
-      return { ...DEFAULT_SETTINGS, ...JSON.parse(raw) }
+      return JSON.parse(raw)
     }
   } catch (e) {
-    console.error("Failed to load settings", e)
+    console.error("Failed to load local settings", e)
   }
-  return DEFAULT_SETTINGS
+  return {}
 }
 
-export const useSettingsStore = create<SettingsStore>((set) => ({
-  ...loadSettings(),
-  updateSettings: (updates) =>
-    set((state) => {
-      const newState = { ...state, ...updates }
+export const useSettingsStore = create<SettingsStore>((set, get) => ({
+  ...DEFAULT_SETTINGS,
+  ...loadLocalSettings(),
+
+  fetchSettings: async () => {
+    try {
+      const data = await settingsApi.get()
+      if (data) {
+        set({
+          follow_redirects: data.follow_redirects,
+          verify_ssl: data.verify_ssl,
+          default_timeout: data.default_timeout,
+          max_response_size: data.max_response_size,
+        })
+      }
+    } catch (e) {
+      console.error("Failed to load backend settings", e)
+    }
+  },
+
+  updateSettings: async (updates) => {
+    // 1. Filter local vs backend updates
+    const localKeys = ["theme", "fontSize", "wordWrap", "sidebarWidth", "sidebarCollapsed", "defaultEnvId"]
+    const localUpdates: any = {}
+    const backendUpdates: any = {}
+
+    Object.entries(updates).forEach(([key, val]) => {
+      if (localKeys.includes(key)) {
+        localUpdates[key] = val
+      } else {
+        backendUpdates[key] = val
+      }
+    })
+
+    // 2. Persist local updates in localStorage
+    if (Object.keys(localUpdates).length > 0) {
+      const currentState = get()
       const settingsToPersist = {
-        theme: newState.theme,
-        fontSize: newState.fontSize,
-        wordWrap: newState.wordWrap,
-        sidebarWidth: newState.sidebarWidth,
-        sidebarCollapsed: newState.sidebarCollapsed,
-        defaultEnvId: newState.defaultEnvId,
+        theme: localUpdates.theme ?? currentState.theme,
+        fontSize: localUpdates.fontSize ?? currentState.fontSize,
+        wordWrap: localUpdates.wordWrap ?? currentState.wordWrap,
+        sidebarWidth: localUpdates.sidebarWidth ?? currentState.sidebarWidth,
+        sidebarCollapsed: localUpdates.sidebarCollapsed ?? currentState.sidebarCollapsed,
+        defaultEnvId: localUpdates.defaultEnvId ?? currentState.defaultEnvId,
       }
       localStorage.setItem("postman_clone_settings", JSON.stringify(settingsToPersist))
-      return updates
-    }),
+      set(localUpdates)
+    }
+
+    // 3. Persist backend updates in SQLite
+    if (Object.keys(backendUpdates).length > 0) {
+      try {
+        const data = await settingsApi.save(backendUpdates)
+        set({
+          follow_redirects: data.follow_redirects,
+          verify_ssl: data.verify_ssl,
+          default_timeout: data.default_timeout,
+          max_response_size: data.max_response_size,
+        })
+      } catch (e) {
+        console.error("Failed to save settings on server", e)
+      }
+    }
+  },
 }))
+export default useSettingsStore
