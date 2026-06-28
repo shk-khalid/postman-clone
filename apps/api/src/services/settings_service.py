@@ -1,3 +1,4 @@
+from src.core.config import settings
 from src.repositories.settings import SettingsRepository
 from src.schemas.settings import SettingsResponse, SettingsUpdate
 
@@ -15,10 +16,10 @@ class SettingsService:
         """Loads and returns parsed application settings from the database."""
         db_settings = self.repo.get_all()
         return SettingsResponse(
-            follow_redirects=db_settings.get("follow_redirects", "true").lower() == "true",
-            verify_ssl=db_settings.get("verify_ssl", "true").lower() == "true",
-            default_timeout=float(db_settings.get("default_timeout", "10.0")),
-            max_response_size=int(db_settings.get("max_response_size", "10485760"))
+            follow_redirects=db_settings.get("follow_redirects", str(settings.DEFAULT_FOLLOW_REDIRECTS).lower()).lower() == "true",
+            verify_ssl=db_settings.get("verify_ssl", str(settings.DEFAULT_VERIFY_SSL).lower()).lower() == "true",
+            default_timeout=float(db_settings.get("default_timeout", str(settings.DEFAULT_TIMEOUT))),
+            max_response_size=int(db_settings.get("max_response_size", str(settings.DEFAULT_MAX_RESPONSE_SIZE)))
         )
 
     def update_settings(self, payload: SettingsUpdate) -> SettingsResponse:
